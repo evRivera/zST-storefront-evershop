@@ -39,34 +39,6 @@ This guide is part of the AI on IBM Z Solution Template. It provides an example 
 </p>
 
 
-Commands:
-git clone git@github.com:evRivera/zST-storefront-evershop.git
-cd zST-storefront-evershop/
-npm init
-npm install @evershop/evershop
-npm run setup
-npm run build
-npm run start
-
-http://localhost:3000 in browser
-http://localhost:3000/admin in browser for admin
-
-add categories and products
-
-
-
-psql postgres
-CREATE ROLE Ai4_test_user WITH LOGIN PASSWORD 'password';
-ALTER ROLE Ai4_test_user CREATEDB;
-
-CREATE DATABASE Ai4_test_database;
-
-
-Resources:
-https://www.sqlshack.com/setting-up-a-postgresql-database-on-mac/
-https://www.postgresql.org/docs/current/sql-createdatabase.html
-
-
 ## Introduction
 
 EverShop is a GraphQL Based and React ecommerce platform with essential commerce features. Built with React, modular and fully customizable.
