@@ -16,33 +16,36 @@ const { emit } = require('@evershop/evershop/src/lib/event/emitter');
 
 // eslint-disable-next-line no-unused-vars
 module.exports = async (request, response, delegate, next) => {
-  const sig = request.headers['stripe-signature'];
+  // **Remove for fraud demo**
+  // const sig = request.headers['stripe-signature'];
 
   let event;
   const connection = await getConnection();
   try {
-    const stripeConfig = getConfig('system.stripe', {});
-    let stripeSecretKey;
-    if (stripeConfig.secretKey) {
-      stripeSecretKey = stripeConfig.secretKey;
-    } else {
-      stripeSecretKey = await getSetting('stripeSecretKey', '');
-    }
-    const stripe = require('stripe')(stripeSecretKey);
+    // **Remove for fraud demo**
+    // const stripeConfig = getConfig('system.stripe', {});
+    // let stripeSecretKey;
+    // if (stripeConfig.secretKey) {
+    //   stripeSecretKey = stripeConfig.secretKey;
+    // } else {
+    //   stripeSecretKey = await getSetting('stripeSecretKey', '');
+    // }
+    // const stripe = require('stripe')(stripeSecretKey);
 
     // Webhook enpoint secret
-    let endpointSecret;
-    if (stripeConfig.endpointSecret) {
-      endpointSecret = stripeConfig.endpointSecret;
-    } else {
-      endpointSecret = await getSetting('stripeEndpointSecret', '');
-    }
+    // let endpointSecret;
+    // if (stripeConfig.endpointSecret) {
+    //   endpointSecret = stripeConfig.endpointSecret;
+    // } else {
+    //   endpointSecret = await getSetting('stripeEndpointSecret', '');
+    // }
 
-    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+    // **Remove for fraud demo**
+    // event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     await startTransaction(connection);
     // Handle the event
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
+    // switch (event.type) {
+    //   case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object;
         const { orderId } = paymentIntent.metadata;
         // Load the order
@@ -83,18 +86,19 @@ module.exports = async (request, response, delegate, next) => {
         // Emit event to add order placed event
         await emit('order_placed', { ...order });
         break;
-      }
-      case 'payment_method.attached': {
-        // eslint-disable-next-line no-console
-        console.log('PaymentMethod was attached to a Customer!');
-        break;
-      }
-      // ... handle other event types
-      default: {
-        // eslint-disable-next-line no-console
-        console.log(`Unhandled event type ${event.type}`);
-      }
-    }
+    // **Remove for fraud demo**
+    //   }
+    //   case 'payment_method.attached': {
+    //     // eslint-disable-next-line no-console
+    //     console.log('PaymentMethod was attached to a Customer!');
+    //     break;
+    //   }
+    //   // ... handle other event types
+    //   default: {
+    //     // eslint-disable-next-line no-console
+    //     console.log(`Unhandled event type ${event.type}`);
+    //   }
+    // }
     await commit(connection);
     // Return a response to acknowledge receipt of the event
     response.json({ received: true });

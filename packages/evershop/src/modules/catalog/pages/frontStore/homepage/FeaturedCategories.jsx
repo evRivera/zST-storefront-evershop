@@ -7,9 +7,9 @@ export default function FeaturedCategories() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 page-width">
         <div>
           <div className="text-center">
-            <img src="/assets/homepage/banner/men-shoes.jpeg" alt="" />
+            <img src="/assets/homepage/banner/kid-shoes.jpeg" alt="" />
           </div>
-          <h3 className="h4 uppercase mt-1 mb-1">Men shoes collection</h3>
+          <h3 className="h4 uppercase mt-1 mb-1">Kid shoes collection</h3>
           <div className="mb-1">
             <p>
               Constructed from luxury nylons, leathers, and custom hardware,
@@ -35,7 +35,7 @@ export default function FeaturedCategories() {
         </div>
         <div>
           <div>
-            <img src="/assets/homepage/banner/kid-shoes.jpeg" alt="" />
+            <img src="/assets/homepage/banner/men-shoes.jpeg" alt="" />
           </div>
           <h3 className="h4 uppercase mt-1 mb-1">Men shoes collection</h3>
           <div className="mb-1">

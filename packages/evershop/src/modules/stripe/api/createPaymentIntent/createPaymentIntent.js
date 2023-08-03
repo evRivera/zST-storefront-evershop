@@ -28,29 +28,30 @@ module.exports = async (request, response, delegate, next) => {
       }
     });
   } else {
-    const stripeConfig = getConfig('system.stripe', {});
-    let stripeSecretKey;
-    if (stripeConfig.secretKey) {
-      stripeSecretKey = stripeConfig.secretKey;
-    } else {
-      stripeSecretKey = await getSetting('stripeSecretKey', '');
-    }
+    // **Remove for fraud demo**
+    // const stripeConfig = getConfig('system.stripe', {});
+    // let stripeSecretKey;
+    // if (stripeConfig.secretKey) {
+    //   stripeSecretKey = stripeConfig.secretKey;
+    // } else {
+    //   stripeSecretKey = await getSetting('stripeSecretKey', '');
+    // }
 
-    const stripe = stripePayment(stripeSecretKey);
-    // Create a PaymentIntent with the order amount and currency
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: smallestUnit.default(order.grand_total, order.currency),
-      currency: order.currency,
-      metadata: {
-        // eslint-disable-next-line camelcase
-        orderId: order_id
-      }
-    });
+    // const stripe = stripePayment(stripeSecretKey);
+    // // Create a PaymentIntent with the order amount and currency
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: smallestUnit.default(order.grand_total, order.currency),
+    //   currency: order.currency,
+    //   metadata: {
+    //     // eslint-disable-next-line camelcase
+    //     orderId: order_id
+    //   }
+    // });
 
     response.status(OK);
     response.json({
       data: {
-        clientSecret: paymentIntent.client_secret
+        clientSecret: "pi_1GszrV2eZvKYlo2CsTWUBkrP_secret_srR3g0KVFbMj1y2wEMB55BjcV" // **Remove for fraud demo**paymentIntent.client_secret 
       }
     });
   }

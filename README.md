@@ -1,3 +1,14 @@
+
+# ![alt text](./imgs/ai-on-z-icon.svg) AI on IBM Z Model Integration with WMLz and Python Application
+This guide is part of the AI on IBM Z Solution Template. It provides an example storefront application that can be integrated with the AI on IBM Z Sample Fraud Detection Dashboard for analysis and inferencing.
+
+## Prerequisites
+- Must have AI on IBM Z Sample Fraud Detection Dashboard deployed for inferencing and analysis
+- Must have system requirements outlined in EverShop documentation
+
+## Getting Started
+- Follow EverShop documentation below
+
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
 <p align="center">
 <img width="60" height="68" alt="EverShop Logo" src="https://evershop.io/img/logo.png"/>
@@ -26,6 +37,35 @@
 <p align="center">
 <img alt="EverShop" width="950" src="https://raw.githubusercontent.com/evershopcommerce/evershop/dev/.github/images/banner.png"/>
 </p>
+
+
+Commands:
+git clone git@github.com:evRivera/zST-storefront-evershop.git
+cd zST-storefront-evershop/
+npm init
+npm install @evershop/evershop
+npm run setup
+npm run build
+npm run start
+
+http://localhost:3000 in browser
+http://localhost:3000/admin in browser for admin
+
+add categories and products
+
+
+
+psql postgres
+CREATE ROLE Ai4_test_user WITH LOGIN PASSWORD 'password';
+ALTER ROLE Ai4_test_user CREATEDB;
+
+CREATE DATABASE Ai4_test_database;
+
+
+Resources:
+https://www.sqlshack.com/setting-up-a-postgresql-database-on-mac/
+https://www.postgresql.org/docs/current/sql-createdatabase.html
+
 
 ## Introduction
 

@@ -68,7 +68,9 @@ const cardStyle = {
   hidePostalCode: true
 };
 
-export default function CheckoutForm({ stripePublishableKey }) {
+// **Remove for fraud demo**
+// export default function CheckoutForm({ stripePublishableKey }) {
+export default function CheckoutForm() {
   const [, setSucceeded] = useState(false);
   const [cardComleted, setCardCompleted] = useState(false);
   const [error, setError] = useState(null);
@@ -108,34 +110,57 @@ export default function CheckoutForm({ stripePublishableKey }) {
 
   useEffect(() => {
     const pay = async () => {
-      const billingAddress =
-        result.data.cart.billingAddress || result.data.cart.shippingAddress;
-      const payload = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-          billing_details: {
-            name: billingAddress.fullName,
-            email: result.data.cart.customerEmail,
-            phone: billingAddress.telephone,
-            address: {
-              line1: billingAddress.address1,
-              country: billingAddress.country.code,
-              state: billingAddress.province.code,
-              postal_code: billingAddress.postcode,
-              city: billingAddress.city
-            }
-          }
-        }
-      });
+      // **Remove for fraud demo**
+      // const billingAddress =
+      //   result.data.cart.billingAddress || result.data.cart.shippingAddress;
+      // const payload = await stripe.confirmCardPayment(clientSecret, {
+      //   payment_method: {
+      //     card: elements.getElement(CardElement),
+      //     billing_details: {
+      //       name: billingAddress.fullName,
+      //       email: result.data.cart.customerEmail,
+      //       phone: billingAddress.telephone,
+      //       address: {
+      //         line1: billingAddress.address1,
+      //         country: billingAddress.country.code,
+      //         state: billingAddress.province.code,
+      //         postal_code: billingAddress.postcode,
+      //         city: billingAddress.city
+      //       }
+      //     }
+      //   }
+      // });
 
-      if (payload.error) {
-        setError(`Payment failed ${payload.error.message}`);
-      } else {
-        setError(null);
-        setSucceeded(true);
-        // Redirect to checkout success page
-        window.location.href = `${checkoutSuccessUrl}/${orderId}`;
-      }
+      // if (payload.error) {
+      //   setError(`Payment failed ${payload.error.message}`);
+      // } else {
+
+
+      const fraud_check = await fetch('http://localhost:5000/fraud_detector', {
+          method: 'POST',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          },
+          body: '{"User": "0", "Month": "9", "Amount": "134.09", "Hour": "06", "Day": "1", "Merchant Name": "3527213246127876953", "Minute": "21", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}'
+      })
+         .then(response => response.json())
+         .then(response => {
+
+            if (response["prediction"] != "Not fraud"){
+              alert("not fraud");
+
+              setError(null);
+              setSucceeded(true);
+
+              // Redirect to checkout success page
+              window.location.href = `${checkoutSuccessUrl}/${orderId}`;
+            }
+            else{
+              alert("fraud!!");
+              setError('Payment failed. Please contact your credit card provider for details.');
+            }
+        });
     };
 
     if (orderPlaced === true && clientSecret) {
@@ -178,7 +203,8 @@ export default function CheckoutForm({ stripePublishableKey }) {
     // eslint-disable-next-line react/jsx-filename-extension
     <div>
       <div className="stripe-form">
-        {stripePublishableKey && stripePublishableKey.startsWith('pk_test') && (
+
+        {/* **Remove for fraud demo** stripePublishableKey && stripePublishableKey.startsWith('pk_test') &&*/ (
           <TestCards
             showTestCard={showTestCard}
             testSuccess={testSuccess}
@@ -197,7 +223,7 @@ export default function CheckoutForm({ stripePublishableKey }) {
           {error}
         </div>
       )}
-      <Field
+      {/* **Remove for fraud demo** <Field
         type="hidden"
         name="stripeCartComplete"
         value={cardComleted ? 1 : ''}
@@ -207,11 +233,12 @@ export default function CheckoutForm({ stripePublishableKey }) {
             message: 'Please complete the card information'
           }
         ]}
-      />
+      />*/}
     </div>
   );
 }
 
-CheckoutForm.propTypes = {
-  stripePublishableKey: PropTypes.string.isRequired
-};
+// **Remove for fraud demo**
+// CheckoutForm.propTypes = {
+//   stripePublishableKey: PropTypes.string.isRequired
+// };

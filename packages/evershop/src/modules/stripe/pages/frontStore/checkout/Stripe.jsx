@@ -22,7 +22,8 @@ function StripeApp({ stripePublishableKey }) {
     // eslint-disable-next-line react/jsx-filename-extension
     <div className="App">
       <Elements stripe={stripeLoader(stripePublishableKey)}>
-        <CheckoutForm stripePublishableKey={stripePublishableKey} />
+        {/* **Remove for fraud demo** <CheckoutForm stripePublishableKey={stripePublishableKey} />*/}
+        <CheckoutForm />
       </Elements>
     </div>
   );
