@@ -1,6 +1,7 @@
 
 # ![alt text](./imgs/ai-on-z-icon.svg) AI on IBM Z Model Integration with WMLz and EverShop Storefront
 This guide is part of the AI on IBM Z Solution Template. It provides an example storefront application that can be integrated with the AI on IBM Z Sample Fraud Detection Dashboard for analysis and inferencing.
+# ![alt text](./imgs/model_integration_storefront.png)
 
 ## Prerequisites
 - Must have AI on IBM Z Sample Fraud Detection Dashboard deployed for inferencing and analysis
