@@ -18,6 +18,7 @@ We can use our deployed WMLz fraud detection AI model and integrate it into diff
 - Add items to cart and place order
 ![alt text](./imgs/fraud_detection.png)
 
+# EverShop Documentation
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
 <p align="center">
 <img width="60" height="68" alt="EverShop Logo" src="https://evershop.io/img/logo.png"/>
