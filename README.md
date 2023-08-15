@@ -10,7 +10,13 @@ We can use our deployed WMLz fraud detection AI model and integrate it into diff
 - Must have [system requirements](https://evershop.io/docs/development/getting-started/system-requirements) that are provided in EverShop documentation
 
 ## Getting Started
-- Follow EverShop documentation below
+- Follow [EverShop documentation](https://evershop.io/docs/development/getting-started/introduction)
+
+## Use Fraud Detection AI Model with EverShop Storefront
+- Make sure you have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.com/evRivera/zST-storefront-evershop) deployed for inferencing and analysis
+- AI on IBM Z Sample Fraud Detection Dashboard is configured to invoke WMLz AI model
+- Add items to cart and place order
+![alt text](./imgs/fraud_detection.png)
 
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
 <p align="center">
