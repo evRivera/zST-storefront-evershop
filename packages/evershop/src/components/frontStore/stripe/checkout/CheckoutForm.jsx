@@ -142,13 +142,12 @@ export default function CheckoutForm() {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
           },
-          body: '{"User": "0", "Month": "9", "Amount": "134.09", "Hour": "06", "Day": "1", "Merchant Name": "3527213246127876953", "Minute": "21", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}'
+          body: '{"User": "0", "Month": "9", "Amount": "134.09", "Day": "1", "Merchant Name": "3527213246127876953", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}'
       })
          .then(response => response.json())
          .then(response => {
 
-            if (response["prediction"] != "Not fraud"){
-              alert("not fraud");
+            if (response["prediction"] == "Not fraud"){
 
               setError(null);
               setSucceeded(true);
@@ -157,7 +156,6 @@ export default function CheckoutForm() {
               window.location.href = `${checkoutSuccessUrl}/${orderId}`;
             }
             else{
-              alert("fraud!!");
               setError('Payment failed. Please contact your credit card provider for details.');
             }
         });
