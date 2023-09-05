@@ -136,13 +136,21 @@ export default function CheckoutForm() {
       // } else {
 
 
+      var transaction_data = "";
+      if (showTestCard == 'success'){
+        transaction_data = '{"User": "0", "Month": "9", "Amount": "134.09", "Day": "1", "Merchant Name": "3527213246127876953", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}';
+      }
+      else{
+        transaction_data = '{"User": "0", "Month": "11", "Amount": "287.13", "Day": "15", "Merchant Name": "-8194607650924472520", "Year": "2015", "Zip": "0", "Card": "0", "Use Chip": "Online Transaction", "Time": 1255}';
+      }
+
       const fraud_check = await fetch('http://localhost:5000/fraud_detector', {
           method: 'POST',
           headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
           },
-          body: '{"User": "0", "Month": "9", "Amount": "134.09", "Day": "1", "Merchant Name": "3527213246127876953", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}'
+          body: transaction_data
       })
          .then(response => response.json())
          .then(response => {

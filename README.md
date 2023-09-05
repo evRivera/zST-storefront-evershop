@@ -122,4 +122,6 @@ Note: You can reference the official [EverShop installation guide](https://evers
 2. AI on IBM Z Sample Fraud Detection Dashboard is configured to invoke WMLz AI model
 3. Add items to cart
 4. Place order
+    - Choose **Test failure** as payment method for fraud transaction example
+    - Choose **Test success** as payment method for non fraud transaction example
     ![alt text](./imgs/fraud_detection.png)
