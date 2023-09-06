@@ -12,7 +12,7 @@ The sample e-commerce application is based on the open source [EverShop Storefro
 # ![alt text](./imgs/model_integration_storefront.png)
 
 ## Prerequisites
-- Must have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.com/evRivera/zST-storefront-evershop) deployed for inferencing and analysis
+- Must have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.ibm.com/AIonZ/zST-model-analysis) deployed for inferencing and analysis
 - Must have [system requirements](https://evershop.io/docs/development/getting-started/system-requirements) that are provided in EverShop documentation
 
 ## Step 1 - Install Sample E-Commerce Application
@@ -118,7 +118,7 @@ Note: You can reference the official [EverShop installation guide](https://evers
     ![alt text](./imgs/access_site.png)
 
 ## Step 4 - Use Fraud Detection AI Model with EverShop Storefront
-1.  Make sure you have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.com/evRivera/zST-storefront-evershop) deployed for inferencing and analysis on the same local system
+1.  Make sure you have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.ibm.com/AIonZ/zST-model-analysis) deployed for inferencing and analysis on the same local system
 2. AI on IBM Z Sample Fraud Detection Dashboard is configured to invoke WMLz AI model
 3. Add items to cart
 4. Place order
