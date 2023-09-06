@@ -40,7 +40,8 @@ export default function StripePayment({
           </div>
         </div>
       </Card.Session>
-      <Card.Session>
+      {/* **Remove for fraud demo** */}
+      {/*  <Card.Session>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-1 items-center flex">
             <h4>Publishable Key</h4>
@@ -84,7 +85,7 @@ export default function StripePayment({
             />
           </div>
         </div>
-      </Card.Session>
+      </Card.Session> */}
     </Card>
   );
 }
