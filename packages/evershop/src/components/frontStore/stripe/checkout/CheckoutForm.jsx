@@ -141,7 +141,7 @@ export default function CheckoutForm() {
         transaction_data = '{"User": "0", "Month": "9", "Amount": "134.09", "Day": "1", "Merchant Name": "3527213246127876953", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}';
       }
       else{
-        transaction_data = '{"User": "0", "Month": "11", "Amount": "287.13", "Day": "15", "Merchant Name": "-8194607650924472520", "Year": "2015", "Zip": "0", "Card": "0", "Use Chip": "Online Transaction", "Time": 1255}';
+        transaction_data = '{"User": "1997", "Month": "9", "Amount": "188.26", "Day": "4", "Merchant Name": "3189517333335617109", "Year": "2016", "Zip": "0", "Card": "2", "Use Chip": "Online Transaction", "Time": 1355}';
       }
 
       const fraud_check = await fetch('http://localhost:5000/fraud_detector', {
@@ -164,7 +164,7 @@ export default function CheckoutForm() {
               window.location.href = `${checkoutSuccessUrl}/${orderId}`;
             }
             else{
-              setError('Payment failed. Please contact your credit card provider for details.');
+              setError('Payment failed. Please contact your credit card provider for details. Refresh page to continue.');
             }
         });
     };
