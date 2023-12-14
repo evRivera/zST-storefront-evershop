@@ -15,7 +15,7 @@ The sample e-commerce application is based on the open source [EverShop Storefro
 - Must have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.ibm.com/AIonZ/zST-model-analysis) deployed for inferencing and analysis
 - Must have [system requirements](https://evershop.io/docs/development/getting-started/system-requirements) that are provided in EverShop documentation
 
-## Step 1 - Install Sample E-Commerce Application
+## Step 1 - Install & Deploy Sample E-Commerce Application
 1. Open terminal
 2. Pull sample EverShop application code from GitHub
     ```
@@ -25,29 +25,9 @@ The sample e-commerce application is based on the open source [EverShop Storefro
     ```
     cd zST-storefront-evershop/
     ```
-4. Install The @evershop/evershop Npm Package
+4. Install and deploy sample application
     ```
-    npm init;
-    npm install @evershop/evershop;
-    ```
-5. Create empty database
-    ```
-    psql postgres
-    CREATE DATABASE tempdb;
-    \q
-    ```
-6. Run the installation script
-    ```
-    npm run setup
-    ```
-    Note: you will have to provide database information (host, port, name, user, password)
-7. Build the site
-    ```
-    npm run build
-    ```
-8. Start the site
-    ```
-    npm run start
+    docker-compose up
     ```
 
 Note: You can reference the official [EverShop installation guide](https://evershop.io/docs/development/getting-started/installation-guide) for more details.
