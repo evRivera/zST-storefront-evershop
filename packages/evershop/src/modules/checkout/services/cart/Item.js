@@ -1,11 +1,7 @@
-const config = require('config');
 const { select } = require('@evershop/postgres-query-builder');
-const fs = require('fs');
-const path = require('path');
 const uniqid = require('uniqid');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
-const { CONSTANTS } = require('@evershop/evershop/src/lib/helpers');
 const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
 /* eslint-disable no-underscore-dangle */
 const { DataObject } = require('./DataObject');
@@ -16,6 +12,9 @@ const { getTaxRates } = require('../../../tax/services/getTaxRates');
 const {
   calculateTaxAmount
 } = require('../../../tax/services/calculateTaxAmount');
+const {
+  getProductsBaseQuery
+} = require('../../../catalog/services/getProductsBaseQuery');
 
 module.exports.Item = class Item extends DataObject {
   static fields = [
@@ -47,22 +46,7 @@ module.exports.Item = class Item extends DataObject {
       key: 'product_id',
       resolvers: [
         async function resolver() {
-          const query = select().from('product');
-          query
-            .leftJoin('product_description', 'des')
-            .on(
-              'product.product_id`',
-              '=',
-              'des.product_description_product_id'
-            );
-          query
-            .innerJoin('product_inventory')
-            .on(
-              'product_inventory.product_inventory_product_id',
-              '=',
-              'product.product_id'
-            );
-
+          const query = getProductsBaseQuery();
           const product = await query
             .where('product_id', '=', this.dataSource.product_id)
             .load(pool);
@@ -95,6 +79,15 @@ module.exports.Item = class Item extends DataObject {
       dependencies: ['product_id']
     },
     {
+      key: 'category_id',
+      resolvers: [
+        async function resolver() {
+          return parseInt(this.dataSource.product.category_id, 10) ?? null;
+        }
+      ],
+      dependencies: ['product_id']
+    },
+    {
       key: 'product_name',
       resolvers: [
         async function resolver() {
@@ -107,20 +100,10 @@ module.exports.Item = class Item extends DataObject {
       key: 'thumbnail',
       resolvers: [
         async function resolver() {
-          if (this.dataSource.product.image) {
-            const thumb = this.dataSource.product.image.replace(
-              /.([^.]*)$/,
-              '-thumb.$1'
-            );
-            return fs.existsSync(path.join(CONSTANTS.MEDIAPATH, thumb))
-              ? `/assets${thumb}`
-              : `/assets/theme/frontStore${config.get(
-                  'catalog.product.image.placeHolder'
-                )}`;
+          if (this.dataSource.product.thumb_image) {
+            return this.dataSource.product.thumb_image;
           } else {
-            return `/assets/theme/frontStore${config.get(
-              'catalog.product.image.placeHolder'
-            )}`;
+            return null;
           }
         }
       ],
@@ -203,6 +186,15 @@ module.exports.Item = class Item extends DataObject {
       dependencies: ['final_price', 'tax_percent']
     },
     {
+      key: 'sub_total',
+      resolvers: [
+        async function resolver() {
+          return toPrice(this.getData('final_price') * this.getData('qty'));
+        }
+      ],
+      dependencies: ['final_price', 'qty']
+    },
+    {
       key: 'total',
       resolvers: [
         async function resolver() {
@@ -261,8 +253,8 @@ module.exports.Item = class Item extends DataObject {
 
                 const addressId =
                   baseCalculationAddress === 'billingAddress'
-                    ? cart['billing_address_id']
-                    : cart['shipping_address_id'];
+                    ? cart.billing_address_id
+                    : cart.shipping_address_id;
 
                 if (!addressId) {
                   return 0;

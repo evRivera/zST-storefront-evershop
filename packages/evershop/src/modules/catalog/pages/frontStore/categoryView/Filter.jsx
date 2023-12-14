@@ -26,10 +26,27 @@ export default function Filter({
     const currentUrl = window.location.href;
     const url = new URL(currentUrl, window.location.origin);
     for (let i = 0; i < currentFilters.length; i += 1) {
+      // Leave the page, limit and sort untouched
+      if (
+        currentFilters[i].key === 'page' ||
+        currentFilters[i].key === 'limit' ||
+        currentFilters[i].key === 'sortBy' ||
+        currentFilters[i].key === 'sortOrder'
+      ) {
+        continue;
+      }
       url.searchParams.delete(currentFilters[i].key);
     }
 
     for (let i = 0; i < newFilters.length; i += 1) {
+      if (
+        newFilters[i].key === 'page' ||
+        newFilters[i].key === 'limit' ||
+        newFilters[i].key === 'sortBy' ||
+        newFilters[i].key === 'sortOrder'
+      ) {
+        continue;
+      }
       url.searchParams.append(newFilters[i].key, newFilters[i].value);
     }
     // window.location.href = url;
@@ -162,7 +179,18 @@ Filter.propTypes = {
     priceRange: PropTypes.shape({
       min: PropTypes.number,
       max: PropTypes.number
-    })
+    }),
+    children: PropTypes.arrayOf(
+      PropTypes.shape({
+        categoryId: PropTypes.number,
+        name: PropTypes.string,
+        uuid: PropTypes.string
+      })
+    )
+  }).isRequired,
+  setting: PropTypes.shape({
+    storeLanguage: PropTypes.string,
+    storeCurrency: PropTypes.string
   }).isRequired
 };
 

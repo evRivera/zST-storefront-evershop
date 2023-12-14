@@ -1,9 +1,6 @@
+const { error } = require('@evershop/evershop/src/lib/log/debuger');
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
-const {
-  select,
-  insert,
-  insertOnUpdate
-} = require('@evershop/postgres-query-builder');
+const { select, insertOnUpdate } = require('@evershop/postgres-query-builder');
 
 module.exports = async function buildUrlReWrite(data) {
   try {
@@ -49,7 +46,7 @@ module.exports = async function buildUrlReWrite(data) {
       // Wait for the category event to be fired and create the url rewrite for product
       return;
     } else {
-      await insert('url_rewrite')
+      await insertOnUpdate('url_rewrite', ['entity_uuid', 'language'])
         .given({
           entity_type: 'product',
           entity_uuid: productUuid,
@@ -58,7 +55,7 @@ module.exports = async function buildUrlReWrite(data) {
         })
         .execute(pool);
     }
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    error(e);
   }
 };

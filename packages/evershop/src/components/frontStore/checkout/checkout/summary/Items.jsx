@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import './Items.scss';
+import ProductNoThumbnail from '@components/common/ProductNoThumbnail';
 
 function ItemVariantOptions({ options = [] }) {
   if (!Array.isArray(options) || !options || options.length === 0) {
@@ -35,7 +36,7 @@ ItemVariantOptions.defaultProps = {
   options: []
 };
 
-function Items({ items }) {
+function Items({ items, displayCheckoutPriceIncludeTax }) {
   return (
     <div id="summary-items">
       <table className="listing items-table">
@@ -50,18 +51,7 @@ function Items({ items }) {
                       <img src={item.thumbnail} alt={item.productName} />
                     )}
                     {!item.thumbnail && (
-                      <svg
-                        style={{ width: '2rem' }}
-                        fill="currentcolor"
-                        viewBox="0 0 20 20"
-                        focusable="false"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M6 11h8V9H6v2zm0 4h8v-2H6v2zm0-8h4V5H6v2zm6-5H5.5A1.5 1.5 0 0 0 4 3.5v13A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V6l-4-4z"
-                        />
-                      </svg>
+                      <ProductNoThumbnail width={45} height={45} />
                     )}
                   </div>
                   <span className="qty">{item.qty}</span>
@@ -78,7 +68,11 @@ function Items({ items }) {
                 </div>
               </td>
               <td>
-                <span>{item.total.text}</span>
+                <span>
+                  {displayCheckoutPriceIncludeTax
+                    ? item.total.text
+                    : item.subTotal.text}
+                </span>
               </td>
             </tr>
           ))}
@@ -97,13 +91,18 @@ Items.propTypes = {
       qty: PropTypes.number,
       total: PropTypes.shape({
         text: PropTypes.string
+      }),
+      subTotal: PropTypes.shape({
+        text: PropTypes.string
       })
     })
-  )
+  ),
+  displayCheckoutPriceIncludeTax: PropTypes.bool
 };
 
 Items.defaultProps = {
-  items: []
+  items: [],
+  displayCheckoutPriceIncludeTax: false
 };
 
 export { Items };

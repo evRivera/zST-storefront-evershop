@@ -16,7 +16,7 @@ exports.DiscountCalculator = class DiscountCalculator {
 
   #registerDefaultDiscountCalculator() {
     this.constructor.addDiscountCalculator(
-      'percentage_discount_to_entire_order',
+      'percentageDiscountToEntireOrder',
       function calculate(coupon, cart) {
         if (coupon.discount_type !== 'percentage_discount_to_entire_order') {
           return false;
@@ -40,6 +40,8 @@ exports.DiscountCalculator = class DiscountCalculator {
               (cartDiscountAmount * precisionFix -
                 distributedAmount * precisionFix) /
               precisionFix;
+            // Fix for rounding error
+            sharedDiscount = parseFloat(sharedDiscount.toFixed(precision));
           } else {
             const rowTotal = item.getData('final_price') * item.getData('qty');
             sharedDiscount = toPrice(
@@ -62,7 +64,7 @@ exports.DiscountCalculator = class DiscountCalculator {
     );
 
     this.constructor.addDiscountCalculator(
-      'fixed_discount_to_entire_order',
+      'fixedDiscountToEntireOrder',
       function calculate(coupon, cart) {
         if (coupon.discount_type !== 'fixed_discount_to_entire_order')
           return false;
@@ -87,6 +89,8 @@ exports.DiscountCalculator = class DiscountCalculator {
               (cartDiscountAmount * precisionFix -
                 distributedAmount * precisionFix) /
               precisionFix;
+            // Fix for rounding error
+            sharedDiscount = parseFloat(sharedDiscount.toFixed(precision));
           } else {
             const rowTotal = item.getData('final_price') * item.getData('qty');
             sharedDiscount = toPrice(
@@ -109,7 +113,7 @@ exports.DiscountCalculator = class DiscountCalculator {
     );
 
     this.constructor.addDiscountCalculator(
-      'discount_to_specific_products',
+      'discountToSpecificProducts',
       async function calculate(coupon, cart) {
         if (
           ![
@@ -119,12 +123,7 @@ exports.DiscountCalculator = class DiscountCalculator {
         ) {
           return false;
         }
-        let targetConfig;
-        try {
-          targetConfig = JSON.parse(coupon.target_products);
-        } catch (e) {
-          return false;
-        }
+        const targetConfig = coupon.target_products;
 
         const maxQty = parseInt(targetConfig.maxQty, 10) || 0;
         if (maxQty <= 0) {
@@ -134,13 +133,16 @@ exports.DiscountCalculator = class DiscountCalculator {
         let discountAmount = toPrice(parseFloat(coupon.discount_amount) || 0);
         const discounts = {};
         const items = cart.getItems();
-        const productIds = items.map((item) => item.getData('product_id'));
-
-        // Load the category of each item
-        const categories = await select()
-          .from('product_category')
-          .where('product_id', 'IN', productIds)
+        // Get collections of all products
+        const collections = await select()
+          .from('product_collection')
+          .where(
+            'product_id',
+            'IN',
+            items.map((item) => item.getData('product_id'))
+          )
           .execute(pool);
+
         items.forEach((item) => {
           // Check if the item is in the target products
           let flag = true;
@@ -151,46 +153,75 @@ exports.DiscountCalculator = class DiscountCalculator {
             const { key } = targetProduct;
             let { operator } = targetProduct;
             const { value } = targetProduct;
-            // Check attribute group
+            // Check attribute group based items
             if (key === 'attribute_group') {
               // If key is attribute group, we only support IN and NOT IN operator
-              if (!['IN', 'NOT IN'].includes(operator)) {
+              if (
+                !['IN', 'NOT IN'].includes(operator) ||
+                !Array.isArray(value)
+              ) {
                 flag = false;
                 return false;
               }
-              const attributeGroupIds = value
-                .split(',')
-                .map((id) => parseInt(id.trim(), 10));
+              const attributeGroupIds = value.map((id) =>
+                parseInt(id.trim(), 10)
+              );
               flag =
                 operator === 'IN'
                   ? attributeGroupIds.includes(item.getData('group_id'))
                   : !attributeGroupIds.includes(item.getData('group_id'));
             }
 
-            // Check category
+            // Check category based items
             if (key === 'category') {
+              const productCategoryId = item.getData('category_id');
               // If key is category, we only support IN and NOT IN operator
-              if (!['IN', 'NOT IN'].includes(operator)) {
-                flag = false;
-                return false;
-              }
-              if (categories.length === 0) {
+              if (
+                !['IN', 'NOT IN'].includes(operator) ||
+                !Array.isArray(value)
+              ) {
                 flag = false;
                 return false;
               }
 
-              const values = value
-                .split(',')
-                .map((id) => parseInt(id.trim(), 10));
-              const e = categories.find(
-                (c) =>
-                  values.includes(c.category_id) &&
-                  parseInt(c.product_id, 10) ===
-                    parseInt(item.getData('product_id'), 10)
+              const requiredCategoryIds = value.map((id) =>
+                parseInt(id.trim(), 10)
               );
-              flag = operator === 'IN' ? e !== undefined : e === undefined;
+              if (operator === 'IN') {
+                flag = requiredCategoryIds.includes(productCategoryId);
+              } else {
+                flag = !requiredCategoryIds.includes(productCategoryId);
+              }
             }
-            // Check price
+            // Check collection based items
+            if (key === 'collection') {
+              // If key is category, we only support IN and NOT IN operator
+              if (
+                !['IN', 'NOT IN'].includes(operator) ||
+                !Array.isArray(value)
+              ) {
+                flag = false;
+                return false;
+              }
+
+              const requiredCollectionIDs = value.map((id) =>
+                parseInt(id.trim(), 10)
+              );
+              if (operator === 'IN') {
+                flag = collections.some(
+                  (collection) =>
+                    requiredCollectionIDs.includes(collection.collection_id) &&
+                    collection.product_id === item.getData('product_id')
+                );
+              } else {
+                flag = !collections.some(
+                  (collection) =>
+                    requiredCollectionIDs.includes(collection.collection_id) &&
+                    collection.product_id === item.getData('product_id')
+                );
+              }
+            }
+            // Check price based items
             if (key === 'price') {
               // If key is price, we do not support IN and NOT IN operator
               if (['=', '!=', '>', '>=', '<', '<='].includes(operator)) {
@@ -214,10 +245,10 @@ exports.DiscountCalculator = class DiscountCalculator {
               }
             }
 
-            // Check sku
+            // Check sku based items
             if (key === 'sku') {
-              if (['IN', 'NOT IN'].includes(operator)) {
-                const skus = value.split(',').map((v) => v.trim());
+              if (['IN', 'NOT IN'].includes(operator) && Array.isArray(value)) {
+                const skus = value.map((v) => v.trim());
                 flag =
                   operator === 'IN'
                     ? skus.includes(item.getData('product_sku'))
@@ -258,17 +289,12 @@ exports.DiscountCalculator = class DiscountCalculator {
     );
 
     this.constructor.addDiscountCalculator(
-      'buy_x_get_y',
+      'buyXGetY',
       function calculate(coupon, cart) {
         if (coupon.discount_type !== 'buy_x_get_y') {
           return true;
         }
-        let configs;
-        try {
-          configs = JSON.parse(coupon.buyx_gety);
-        } catch (e) {
-          return false;
-        }
+        const configs = coupon.buyx_gety;
         const items = cart.getItems();
         configs.forEach((row) => {
           const sku = row.sku ?? null;

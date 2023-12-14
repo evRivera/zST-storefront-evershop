@@ -1,5 +1,8 @@
 const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
 const {
+  translate
+} = require('@evershop/evershop/src/lib/locale/translate/translate');
+const {
   getContextValue,
   setContextValue
 } = require('../../../../graphql/services/contextHelper');
@@ -12,8 +15,8 @@ module.exports = (request, response, delegate, next) => {
     response.redirect(buildUrl('homepage'));
   } else {
     setContextValue(request, 'pageInfo', {
-      title: 'Create an account',
-      description: 'Create an account'
+      title: translate('Create an account'),
+      description: translate('Create an account')
     });
     next();
   }

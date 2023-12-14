@@ -41,7 +41,12 @@ export default function Items({ order: { items, shipmentStatus } }) {
                     },
                     {
                       component: { default: Name },
-                      props: { name: i.productName, options: [] }, // TODO: Implement custom options
+                      props: {
+                        name: i.productName,
+                        productSku: i.productSku,
+                        productUrl: i.productUrl,
+                        variantOptions: JSON.parse(i.variantOptions || '[]')
+                      }, // TODO: Implement custom options
                       sortOrder: 20,
                       id: 'productName'
                     },
@@ -54,11 +59,11 @@ export default function Items({ order: { items, shipmentStatus } }) {
                     {
                       component: { default: 'td' },
                       props: {
-                        children: <span>{i.total.text}</span>,
-                        key: 'total'
+                        children: <span>{i.subTotal.text}</span>,
+                        key: 'subTotal'
                       },
                       sortOrder: 40,
-                      id: 'total'
+                      id: 'subTotal'
                     }
                   ]}
                 />
@@ -83,16 +88,23 @@ Items.propTypes = {
         id: PropTypes.string,
         qty: PropTypes.number,
         productName: PropTypes.string,
+        productSku: PropTypes.string,
+        productUrl: PropTypes.string,
         thumbnail: PropTypes.string,
         productPrice: PropTypes.shape({
           value: PropTypes.number,
           text: PropTypes.string
         }),
+        variantOptions: PropTypes.string,
         finalPrice: PropTypes.shape({
           value: PropTypes.number,
           text: PropTypes.string
         }),
         total: PropTypes.shape({
+          value: PropTypes.number,
+          text: PropTypes.string
+        }),
+        subTotal: PropTypes.shape({
           value: PropTypes.number,
           text: PropTypes.string
         })
@@ -111,13 +123,7 @@ Items.propTypes = {
       updateShipmentApi: PropTypes.string
     }),
     createShipmentApi: PropTypes.string.isRequired
-  }).isRequired,
-  carriers: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.string
-    })
-  ).isRequired
+  }).isRequired
 };
 
 export const layout = {
@@ -127,7 +133,7 @@ export const layout = {
 
 export const query = `
   query Query {
-    order(id: getContextValue("orderId")) {
+    order(uuid: getContextValue("orderId")) {
       currency
       shipment {
         shipmentId
@@ -145,7 +151,10 @@ export const query = `
         id: orderItemId
         qty
         productName
+        productSku
+        productUrl
         thumbnail
+        variantOptions
         productPrice {
           value
           text
@@ -155,6 +164,10 @@ export const query = `
           text
         }
         total {
+          value
+          text
+        }
+        subTotal {
           value
           text
         }

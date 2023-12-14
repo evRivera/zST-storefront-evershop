@@ -2,10 +2,13 @@ const { select } = require('@evershop/postgres-query-builder');
 const uniqid = require('uniqid');
 const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
 const { camelCase } = require('@evershop/evershop/src/lib/util/camelCase');
+const {
+  getProductsBaseQuery
+} = require('../../../../services/getProductsBaseQuery');
 
 module.exports = {
   Product: {
-    variantGroup: async (product, _, { pool, userTokenPayload }) => {
+    variantGroup: async (product, _, { pool, user }) => {
       const { variantGroupId } = product;
       if (!variantGroupId) {
         return null;
@@ -52,14 +55,14 @@ module.exports = {
           'IN',
           Object.values(group).filter((v) => Number.isInteger(v))
         );
-        if (!userTokenPayload?.user?.uuid) {
+        if (!user) {
           query.andWhere('status', '=', 1);
         }
         const vs = await query.execute(pool);
         // Filter the vs array, make sure that each product has all the attributes
         // that are in the variant group.
         let filteredVs;
-        if (!userTokenPayload?.user?.uuid) {
+        if (!user) {
           filteredVs = vs.filter((v) => {
             const attributes = Object.values(group).filter((attr) =>
               Number.isInteger(attr)
@@ -160,21 +163,7 @@ module.exports = {
   },
   Variant: {
     product: async ({ productId }, _, { pool }) => {
-      const query = select().from('product');
-      query
-        .leftJoin('product_description')
-        .on(
-          'product_description.product_description_product_id',
-          '=',
-          'product.product_id'
-        );
-      query
-        .innerJoin('product_inventory')
-        .on(
-          'product_inventory.product_inventory_product_id',
-          '=',
-          'product.product_id'
-        );
+      const query = getProductsBaseQuery();
       query.where('product_id', '=', productId);
       const result = await query.load(pool);
       if (!result) {

@@ -1,5 +1,4 @@
-const { update, select, del } = require('@evershop/postgres-query-builder');
-const bcrypt = require('bcryptjs');
+const { select, del } = require('@evershop/postgres-query-builder');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
@@ -12,6 +11,7 @@ const {
 } = require('@evershop/evershop/src/lib/util/httpStatus');
 const { debug } = require('@evershop/evershop/src/lib/log/debuger');
 const { getConfig } = require('@evershop/evershop/src/lib/util/getConfig');
+const updatePassword = require('../../services/customer/updatePassword');
 
 // eslint-disable-next-line no-unused-vars
 module.exports = async (request, response, delegate, next) => {
@@ -23,9 +23,6 @@ module.exports = async (request, response, delegate, next) => {
 
     // Hash the token
     const hash = crypto.createHash('sha256').update(token).digest('hex');
-    // Hash the password using bcryptjs
-    const salt = bcrypt.genSaltSync(10);
-    const passwordHash = bcrypt.hashSync(password, salt);
 
     // Check if token is existed and created not more than 48 hours, created_at is timestamp with time zone UTC
     const resetTokenLifetime = getConfig(
@@ -58,13 +55,9 @@ module.exports = async (request, response, delegate, next) => {
       return;
     }
 
-    // Update the customer with the new password
-    const customer = await update('customer')
-      .given({
-        password: passwordHash
-      })
-      .where('customer_id', '=', existingToken.customer_id)
-      .execute(pool);
+    await updatePassword(existingToken.customer_id, password, {
+      routeId: request.currentRoute.id
+    });
 
     // Delete the token
     await del('reset_password_token')
@@ -75,11 +68,8 @@ module.exports = async (request, response, delegate, next) => {
       )
       .execute(pool);
 
-    // Delete the passwrord from the customer object
-    delete customer.password;
-
     response.status(OK);
-    response.$body = { ...customer };
+    response.$body = {};
     next();
   } catch (e) {
     debug('critical', e);

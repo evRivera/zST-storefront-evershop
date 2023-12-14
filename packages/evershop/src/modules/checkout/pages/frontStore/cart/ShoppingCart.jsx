@@ -25,7 +25,7 @@ Title.propTypes = {
   title: PropTypes.string.isRequired
 };
 
-export default function ShoppingCart({ cart, removeUrl }) {
+export default function ShoppingCart({ cart, setting, removeUrl }) {
   const { totalQty = 0, items = [] } = cart || {};
   if (totalQty <= 0) {
     return <Empty />;
@@ -53,7 +53,7 @@ export default function ShoppingCart({ cart, removeUrl }) {
                 coreComponents={[
                   {
                     component: { default: Items },
-                    props: { items, cartId: cart.uuid, removeUrl },
+                    props: { items, setting, cartId: cart.uuid, removeUrl },
                     sortOrder: 10,
                     id: 'shoppingCartTitle'
                   }
@@ -76,6 +76,9 @@ ShoppingCart.propTypes = {
   cart: PropTypes.shape({
     uuid: PropTypes.string.isRequired
   }).isRequired,
+  setting: PropTypes.shape({
+    displayCheckoutPriceIncludeTax: PropTypes.bool
+  }).isRequired,
   removeUrl: PropTypes.string.isRequired
 };
 
@@ -86,7 +89,7 @@ export const layout = {
 
 export const query = `
   query Query {
-    cart(id: getContextValue('cartId', null)) {
+    cart {
       totalQty
       uuid
       items {
@@ -101,7 +104,19 @@ export const query = `
           value
           text
         }
+        productPriceInclTax {
+          value
+          text
+        }
         finalPrice {
+          value
+          text
+        }
+        finalPriceInclTax {
+          value
+          text
+        }
+        subTotal {
           value
           text
         }
@@ -112,6 +127,9 @@ export const query = `
         removeApi
         errors
       }
+    }
+    setting {
+      displayCheckoutPriceIncludeTax
     }
   }
 `;

@@ -1,5 +1,4 @@
 import ProductList from '@components/frontStore/catalog/product/list/List';
-import { _ } from '@evershop/evershop/src/lib/locale/translate';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -27,6 +26,7 @@ FeaturedProducts.propTypes = {
       items: PropTypes.arrayOf(
         PropTypes.shape({
           productId: PropTypes.number.isRequired,
+          sku: PropTypes.string.isRequired,
           name: PropTypes.string.isRequired,
           price: PropTypes.shape({
             regular: PropTypes.shape({
@@ -49,10 +49,6 @@ FeaturedProducts.propTypes = {
   }).isRequired
 };
 
-FeaturedProducts.defaultProps = {
-  featuredProducts: []
-};
-
 export const layout = {
   areaId: 'content',
   sortOrder: 15
@@ -67,6 +63,7 @@ export const query = `
         items {
           productId
           name
+          sku
           price {
             regular {
               value

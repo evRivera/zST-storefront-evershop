@@ -34,7 +34,7 @@ export const layout = {
 
 export const query = `
   query Query {
-    customer(id: getContextValue("customerId", null)) {
+    customer: currentCustomer {
       uuid
       fullName
       email

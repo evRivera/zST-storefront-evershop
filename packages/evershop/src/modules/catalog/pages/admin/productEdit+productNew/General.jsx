@@ -91,6 +91,16 @@ function Category({ product }) {
             >
               Change
             </a>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setCategory(null);
+              }}
+              className="text-critical ml-2"
+            >
+              Unassign
+            </a>
           </span>
         </div>
       )}
@@ -103,15 +113,15 @@ function Category({ product }) {
           }}
           className="text-interactive"
         >
-          {'Select category'}
+          Select category
         </a>
       )}
       {selecting && (
         <div className="absolute top-5 left-0 right-0 bg-[#eff2f5] z-50 border rounded border-[#c9cccf] p-[10px]">
           <CategoryTree
             selectedCategory={category}
-            setSelectedCategory={(category) => {
-              setCategory(category);
+            setSelectedCategory={(cat) => {
+              setCategory(cat);
               setSelecting(false);
             }}
           />
@@ -120,7 +130,7 @@ function Category({ product }) {
       <input
         type="hidden"
         name="category_id"
-        value={category?.categoryId || null}
+        value={category?.categoryId || ''}
       />
     </div>
   );
@@ -153,7 +163,7 @@ export default function General({
   uploadApi,
   folderCreateApi,
   setting,
-  taxClasses
+  productTaxClasses: { items: taxClasses }
 }) {
   return (
     <Card title="General">
@@ -267,11 +277,22 @@ General.propTypes = {
   setting: PropTypes.shape({
     storeCurrency: PropTypes.string,
     weightUnit: PropTypes.string
-  }).isRequired
+  }).isRequired,
+  productTaxClasses: PropTypes.shape({
+    items: PropTypes.arrayOf(
+      PropTypes.shape({
+        value: PropTypes.number,
+        text: PropTypes.string
+      })
+    )
+  })
 };
 
 General.defaultProps = {
-  product: undefined
+  product: undefined,
+  productTaxClasses: {
+    items: []
+  }
 };
 
 export const layout = {
@@ -312,9 +333,11 @@ export const query = `
     deleteApi: url(routeId: "fileDelete", params: [{key: "0", value: ""}])
     uploadApi: url(routeId: "imageUpload", params: [{key: "0", value: ""}])
     folderCreateApi: url(routeId: "folderCreate")
-    taxClasses {
-      value: taxClassId
-      text: name
+    productTaxClasses: taxClasses {
+      items {
+        value: taxClassId
+        text: name
+      }
     }
   }
 `;

@@ -1,23 +1,23 @@
 """
-Retrieve an Order Address.
+Represents an Order Address.
 """
 type OrderAddress implements Address {
   orderAddressId: Int!
   uuid: String!
-  fullName: String!
-  postcode: String!
-  telephone: String!
-  country: Country!
-  province: Province!
-  city: String!
-  address1: String!
+  fullName: String
+  postcode: String
+  telephone: String
+  country: Country
+  province: Province
+  city: String
+  address1: String
   address2: String
 }
 
 """
-Retrieve an Order Item.
+Represents an Order Item.
 """
-type OrdertItem implements ShoppingCartItem {
+type OrderItem {
   orderItemId: ID!
   uuid: String!
   orderId: ID!
@@ -34,26 +34,26 @@ type OrdertItem implements ShoppingCartItem {
   taxPercent: Float!
   taxAmount: Price!
   discountAmount: Price!
+  subTotal: Price!
   total: Price!
   variantGroupId: Int
   variantOptions: String
   productCustomOptions: String
-  productUrl: String!
+  productUrl: String
 }
 
 """
-Retrieve an Order.
+Represents an Order.
 """
 type Order implements ShoppingCart {
   orderId: ID!
   uuid: String!
   orderNumber: String!
-  items: [OrdertItem]
+  items: [OrderItem]
   shippingAddress: OrderAddress
   billingAddress: OrderAddress
   currency: String!
   customerId: Int
-  customerUrl: String
   customerGroupId: Int
   customerEmail: String
   customerFullName: String
@@ -65,6 +65,7 @@ type Order implements ShoppingCart {
   shippingFeeInclTax: Price!
   discountAmount: Price!
   subTotal: Price!
+  subTotalInclTax: Price!
   totalQty: Int!
   totalWeight: Weight!
   taxAmount: Price!
@@ -78,14 +79,12 @@ type Order implements ShoppingCart {
   shippingNote: String
   createdAt: Date!
   updatedAt: String!
-  editUrl: String!
-  createShipmentApi: String!
   activities: [Activity]
   shipment: Shipment
 }
 
 """
-Retrieve an Order Activity.
+Represents an Order Activity.
 """
 type Activity {
   orderActivityId: Int!
@@ -96,7 +95,7 @@ type Activity {
 }
 
 """
-Retrieve an Order Shipment.
+Represents a Shipment.
 """
 type Shipment {
   shipmentId: Int!
@@ -105,7 +104,6 @@ type Shipment {
   trackingNumber: String
   createdAt: DateTime!
   updatedAt: DateTime
-  updateShipmentApi: String!
 }
 
 """
@@ -118,7 +116,10 @@ type OrderCollection {
   currentFilters: [Filter]
 }
 
+extend type Customer {
+  orders: [Order]
+}
+
 extend type Query {
-  order(id: String!): Order
-  orders(filters: [FilterInput]): OrderCollection
+  order(uuid: String!): Order
 }

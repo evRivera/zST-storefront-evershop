@@ -37,14 +37,16 @@ export function Form(props) {
   const [state, setState] = useState('initialized');
 
   const addField = (name, value, validationRules = []) => {
-    setFields((previous) => previous.concat({ name, value, validationRules }));
+    setFields((previous) =>
+      previous.concat({ name, value, validationRules, updated: false })
+    );
   };
 
   const updateField = (name, value, validationRules = []) => {
     setFields((previous) =>
       previous.map((f) => {
         if (f.name === name) {
-          return { name, value, validationRules };
+          return { name, value, validationRules, updated: true };
         } else {
           return f;
         }
@@ -205,6 +207,7 @@ export function Form(props) {
                     );
                 }}
                 isLoading={loading}
+                type="submit"
               />
             </div>
           )}
@@ -229,7 +232,8 @@ Form.propTypes = {
   onSuccess: PropTypes.func,
   onValidationError: PropTypes.func,
   submitBtn: PropTypes.bool,
-  isJSON: PropTypes.bool
+  isJSON: PropTypes.bool,
+  dataFilter: PropTypes.func
 };
 
 Form.defaultProps = {
@@ -242,7 +246,8 @@ Form.defaultProps = {
   submitBtn: true,
   isJSON: true,
   action: '',
-  method: 'POST'
+  method: 'POST',
+  dataFilter: undefined
 };
 
 export const useFormContext = () => React.useContext(FormContext);

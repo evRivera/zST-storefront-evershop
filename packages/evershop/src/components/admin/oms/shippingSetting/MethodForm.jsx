@@ -36,49 +36,51 @@ function Condition({ method }) {
           value={type}
         />
       </div>
-      {type === 'price' && (
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Field
-              name="min"
-              label={
-                method.conditionType === 'price'
-                  ? 'Minimum order price'
-                  : 'Minimum order weight'
-              }
-              placeholder={
-                method.conditionType === 'price'
-                  ? 'Minimum order price'
-                  : 'Minimum order weight'
-              }
-              type="text"
-              value={method?.min}
-              validationRules={['notEmpty']}
-            />
-          </div>
-          <div>
-            <Field
-              name="max"
-              label={
-                method.conditionType === 'price'
-                  ? 'Maximum order price'
-                  : 'Maximum order weight'
-              }
-              placeholder={
-                method.conditionType === 'price'
-                  ? 'Maximum order price'
-                  : 'Maximum order weight'
-              }
-              type="text"
-              value={method?.max}
-              validationRules={['notEmpty']}
-            />
-          </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Field
+            name="min"
+            label={
+              type === 'price' ? 'Minimum order price' : 'Minimum order weight'
+            }
+            placeholder={
+              type === 'price' ? 'Minimum order price' : 'Minimum order weight'
+            }
+            type="text"
+            value={method?.min}
+            validationRules={['notEmpty']}
+          />
         </div>
-      )}
+        <div>
+          <Field
+            name="max"
+            label={
+              type === 'price' ? 'Maximum order price' : 'Maximum order weight'
+            }
+            placeholder={
+              type === 'price' ? 'Maximum order price' : 'Maximum order weight'
+            }
+            type="text"
+            value={method?.max}
+            validationRules={['notEmpty']}
+          />
+        </div>
+      </div>
     </div>
   );
 }
+
+Condition.propTypes = {
+  method: PropTypes.shape({
+    conditionType: PropTypes.string,
+    min: PropTypes.string,
+    max: PropTypes.string
+  })
+};
+
+Condition.defaultProps = {
+  method: null
+};
 
 function MethodForm({ saveMethodApi, closeModal, getZones, method }) {
   const [type, setType] = React.useState(
@@ -94,7 +96,7 @@ function MethodForm({ saveMethodApi, closeModal, getZones, method }) {
       : null
   );
   const [hasCondition, setHasCondition] = React.useState(
-    method?.conditionType ? true : false
+    !!method?.conditionType
   );
 
   const [result, reexecuteQuery] = useQuery({
@@ -196,13 +198,13 @@ function MethodForm({ saveMethodApi, closeModal, getZones, method }) {
             className="text-interactive"
             onClick={(e) => {
               e.preventDefault();
-              hasCondition ? setHasCondition(false) : setHasCondition(true);
+              setHasCondition(!hasCondition);
             }}
           >
             {hasCondition ? 'Remove condition' : 'Add condition'}
           </a>
           {!hasCondition && (
-            <input name="condition_type" type="hidden" value={'none'} />
+            <input name="condition_type" type="hidden" value="none" />
           )}
           {hasCondition && <Condition method={method} />}
         </Card.Session>
@@ -233,10 +235,21 @@ MethodForm.propTypes = {
   closeModal: PropTypes.func.isRequired,
   getZones: PropTypes.func.isRequired,
   method: PropTypes.shape({
+    methodId: PropTypes.string,
     name: PropTypes.string,
-    cost: PropTypes.string,
-    calculate_api: PropTypes.string
+    isEnabled: PropTypes.bool,
+    calculateApi: PropTypes.string,
+    cost: PropTypes.shape({
+      value: PropTypes.string
+    }),
+    conditionType: PropTypes.string,
+    min: PropTypes.string,
+    max: PropTypes.string
   })
+};
+
+MethodForm.defaultProps = {
+  method: null
 };
 
 export default MethodForm;

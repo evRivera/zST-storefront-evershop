@@ -8,7 +8,7 @@ const Select = React.forwardRef((props, ref) => {
   const {
     name,
     placeholder,
-    disableDefaultOption = true,
+    disableDefaultOption,
     value,
     label,
     onChange,
@@ -44,7 +44,7 @@ const Select = React.forwardRef((props, ref) => {
           ref={ref}
         >
           <option value="" disabled={disableDefaultOption}>
-            {placeholder || 'Please select'}
+            {placeholder || _('Please select')}
           </option>
           {options &&
             options.map(
@@ -90,7 +90,8 @@ Select.propTypes = {
     })
   ),
   placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  disableDefaultOption: PropTypes.bool
 };
 
 Select.defaultProps = {
@@ -101,7 +102,8 @@ Select.defaultProps = {
   options: [],
   placeholder: undefined,
   name: undefined,
-  value: undefined
+  value: undefined,
+  disableDefaultOption: true
 };
 
 export { Select };

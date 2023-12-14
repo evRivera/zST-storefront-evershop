@@ -1,3 +1,4 @@
+/* eslint-disable */
 const uniqid = require('uniqid');
 const { toString } = require('./toString');
 const { fieldResolve } = require('./fieldResolve');
@@ -11,7 +12,7 @@ class Select {
   select(field, alias) {
     // Resolve field name
     let f = '';
-    if (isValueASQL(field)) {
+    if (isValueASQL(field) || field === '*') {
       f += `${field}`;
     } else {
       f += `"${field}"`;
@@ -639,12 +640,29 @@ class SelectQuery extends Query {
       let { rows } = await connection.query({ text: sql, values: binding });
       return rows;
     } catch (e) {
+      if (connection.INTRANSACTION === true) {
+        throw e;
+      }
       if (e.code === '42703') {
         this.removeOrderBy();
         return await super.execute(connection, false);
       } else if (e.code.toLowerCase() === '22p02') {
-        // In case of invalid input type, we consider it as empty result
-        return [];
+        const countField = this._select._fields.find((f) =>
+          /COUNT\s*\(/i.test(f)
+        );
+        if (countField) {
+          let alias = countField.match(/(?<=as\s)(.*)/i);
+          if (alias) {
+            alias = alias[0].trim();
+            // Remove the single quote and double quote if any
+            alias = alias.replace(/'/g, '').replace(/"/g, '');
+          } else {
+            alias = 'count';
+          }
+          return [{ [alias]: 0 }];
+        } else {
+          return [];
+        }
       } else {
         throw e;
       }
@@ -998,6 +1016,7 @@ function select() {
   let select = new SelectQuery();
   let args = [...arguments];
   if (args[0] === '*') {
+    select.select('*');
     return select;
   }
   args.forEach((arg) => {

@@ -1,17 +1,17 @@
 /* eslint-disable camelcase */
 const { default: axios } = require('axios');
 const { select, update } = require('@evershop/postgres-query-builder');
-const { getContextValue } = require('../../../graphql/services/contextHelper');
-const { getSetting } = require('../../../setting/services/setting');
-const { toPrice } = require('../../../checkout/services/toPrice');
 const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
-const { getApiBaseUrl } = require('../../services/getApiBaseUrl');
 const {
   INVALID_PAYLOAD,
   OK,
   INTERNAL_SERVER_ERROR
 } = require('@evershop/evershop/src/lib/util/httpStatus');
+const { getContextValue } = require('../../../graphql/services/contextHelper');
+const { getSetting } = require('../../../setting/services/setting');
+const { toPrice } = require('../../../checkout/services/toPrice');
+const { getApiBaseUrl } = require('../../services/getApiBaseUrl');
 
 // eslint-disable-next-line no-unused-vars
 module.exports = async (request, response, stack, next) => {
@@ -96,15 +96,18 @@ module.exports = async (request, response, stack, next) => {
 
     // Add shipping address
     if (shippingAddress) {
+      const address = {
+        address_line_1: shippingAddress.address_1,
+        address_line_2: shippingAddress.address_2,
+        admin_area_2: shippingAddress.city,
+        postal_code: shippingAddress.postcode,
+        country_code: shippingAddress.country
+      };
+      if (shippingAddress.province) {
+        address.admin_area_1 = shippingAddress.province.split('-').pop();
+      }
       orderData.purchase_units[0].shipping = {
-        address: {
-          address_line_1: shippingAddress.address_1,
-          address_line_2: shippingAddress.address_2,
-          admin_area_1: shippingAddress.province.split('-').pop(),
-          admin_area_2: shippingAddress.city,
-          postal_code: shippingAddress.postcode,
-          country_code: shippingAddress.country
-        }
+        address
       };
     } else {
       // This is digital order, no shipping address
@@ -127,15 +130,18 @@ module.exports = async (request, response, stack, next) => {
 
     // Add billing address
     if (billingAddress) {
+      const address = {
+        address_line_1: billingAddress.address,
+        address_line_2: billingAddress.address2,
+        admin_area_2: billingAddress.city,
+        postal_code: billingAddress.postcode,
+        country_code: billingAddress.country
+      };
+      if (billingAddress.province) {
+        address.admin_area_1 = billingAddress.province.split('-').pop();
+      }
       orderData.purchase_units[0].billing = {
-        address: {
-          address_line_1: billingAddress.address,
-          address_line_2: billingAddress.address2,
-          admin_area_1: billingAddress.province.split('-').pop(),
-          admin_area_2: billingAddress.city,
-          postal_code: billingAddress.postcode,
-          country_code: billingAddress.country
-        }
+        address
       };
     }
     // Call PayPal API to create order using axios

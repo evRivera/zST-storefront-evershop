@@ -1,17 +1,19 @@
 const http = require('http');
+const { Handler } = require('@evershop/evershop/src/lib/middleware/Handler');
+const spawn = require('cross-spawn');
+const path = require('path');
+const { error } = require('@evershop/evershop/src/lib/log/debuger');
+const isDevelopmentMode = require('@evershop/evershop/src/lib/util/isDevelopmentMode');
 const { createApp } = require('./app');
 const normalizePort = require('./normalizePort');
 const onListening = require('./onListening');
 const onError = require('./onError');
-const { Handler } = require('@evershop/evershop/src/lib/middleware/Handler');
 const { getCoreModules } = require('./loadModules');
 const { migrate } = require('./bootstrap/migrate');
 const { loadBootstrapScript } = require('./bootstrap/bootstrap');
 const { getEnabledExtensions } = require('../extension');
-const spawn = require('cross-spawn');
-const path = require('path');
 
-var app = createApp();
+let app = createApp();
 /** Create a http server */
 const server = http.createServer(app);
 
@@ -20,54 +22,65 @@ module.exports.start = async function start(cb) {
 
   /** Migration */
   try {
-    for (const module of modules) {
-      await migrate(module);
-    }
+    await migrate(modules);
   } catch (e) {
-    console.log(e);
+    error(e);
     process.exit(0);
   }
 
   /** Loading bootstrap script from modules */
   try {
+    // eslint-disable-next-line no-restricted-syntax
     for (const module of modules) {
       await loadBootstrapScript(module);
     }
   } catch (e) {
-    console.log(e);
+    error(e);
     process.exit(0);
   }
   process.env.ALLOW_CONFIG_MUTATIONS = false;
   /**
    * Get port from environment and store in Express.
    */
-  const port = normalizePort(process.env.PORT || '3000');
+  const port = normalizePort();
   app.set('port', port);
 
   /** Start listening */
-  server.on('listening', onListening);
-  cb ? server.on('listening', cb) : null;
+  server.on('listening', () => {
+    onListening();
+    if (cb) {
+      cb();
+    }
+  });
   server.on('error', onError);
   server.listen(port);
 
   // Spawn the child process to manage events
-  const child = spawn(
-    'node',
-    [path.resolve(__dirname, '../../src/lib/event/event-manager.js')],
-    {
-      stdio: 'inherit'
+  const args = [
+    path.resolve(__dirname, '../../src/lib/event/event-manager.js')
+  ];
+  if (isDevelopmentMode() || process.argv.includes('--debug')) {
+    args.push('--debug');
+  }
+  const child = spawn('node', args, {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      ALLOW_CONFIG_MUTATIONS: true
     }
-  );
-  child.on('error', (err) => {
-    console.error(`Error spawning event processor: ${err}`);
   });
+
+  child.on('error', (err) => {
+    error(`Error spawning event processor: ${err}`);
+  });
+
   child.unref();
 };
 
 module.exports.updateApp = function updateApp(cb) {
   /** Clean up middleware */
   Handler.middlewares = [];
-  var newApp = createApp();
+  const newApp = createApp();
   server.removeListener('request', app);
   server.on('request', newApp);
   app = newApp;

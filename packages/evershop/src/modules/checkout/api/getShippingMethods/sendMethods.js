@@ -1,5 +1,6 @@
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
 const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
+const normalizePort = require('@evershop/evershop/bin/lib/normalizePort');
 const {
   OK,
   INTERNAL_SERVER_ERROR,
@@ -30,12 +31,12 @@ module.exports = async (request, response, delegate, next) => {
       return;
     }
 
-    if (!country || !province) {
+    if (!country) {
       response.status(INVALID_PAYLOAD);
       response.json({
         error: {
           status: INVALID_PAYLOAD,
-          message: 'Shipping country and province are required'
+          message: 'Shipping country is required'
         }
       });
       return;
@@ -49,24 +50,28 @@ module.exports = async (request, response, delegate, next) => {
         '=',
         'shipping_zone.shipping_zone_id'
       );
-    zoneQuery
-      .where('shipping_zone_province.province', '=', province)
-      .or('shipping_zone_province.province', 'IS NULL', null);
+    if (province) {
+      zoneQuery
+        .where('shipping_zone_province.province', '=', province)
+        .or('shipping_zone_province.province', 'IS NULL', null);
+    } else {
+      zoneQuery.where('shipping_zone_province.province', 'IS NULL', null);
+    }
+
     zoneQuery.andWhere('shipping_zone.country', '=', country);
 
     const zone = await zoneQuery.load(pool);
     if (!zone) {
-      response.status(INVALID_PAYLOAD);
+      response.status(200);
       response.json({
-        error: {
-          status: INVALID_PAYLOAD,
-          message: `No shipping zone available for ${country} - ${province}`
+        data: {
+          methods: []
         }
       });
       return;
     }
 
-    let methodsQuery = select().from('shipping_method');
+    const methodsQuery = select().from('shipping_method');
     methodsQuery
       .leftJoin('shipping_zone_method')
       .on(
@@ -88,12 +93,13 @@ module.exports = async (request, response, delegate, next) => {
           toPrice(method.min) <= cart.sub_total &&
           cart.sub_total <= toPrice(method.max)
         );
-      }
-      if (method.condition_type === 'weight') {
+      } else if (method.condition_type === 'weight') {
         return (
           toPrice(method.min) <= cart.total_weight &&
           cart.total_weight <= toPrice(method.max)
         );
+      } else {
+        return false;
       }
     });
 
@@ -102,7 +108,8 @@ module.exports = async (request, response, delegate, next) => {
       methods.map(async (method) => {
         if (method.calculate_api) {
           // This API is internal. It must be public
-          let api = 'http://localhost:3000';
+          const port = normalizePort();
+          let api = `http://localhost:${port}`;
           try {
             api += buildUrl(method.calculate_api, {
               cart_id,
@@ -113,16 +120,16 @@ module.exports = async (request, response, delegate, next) => {
               `Your shipping calculate API ${method.calculate_api} is invalid`
             );
           }
-          const response = await axios.get(api);
+          const jsonResponse = await axios.get(api);
           // Detect if the API returns an error base on the http status
-          if (response.status >= 400) {
+          if (jsonResponse.status >= 400) {
             throw new Error(
               `Error calculating shipping cost for method ${method.name}`
             );
           }
           return {
             ...method,
-            cost: toPrice(response.data.data.cost, true)
+            cost: toPrice(jsonResponse.data.data.cost, true)
           };
         } else {
           return {

@@ -1,28 +1,9 @@
 const fs = require('fs');
-const csv = require('csv-parser');
-const { getConfig } = require('../../util/getConfig');
 const path = require('path');
+const { getConfig } = require('../../util/getConfig');
 const { CONSTANTS } = require('../../helpers');
-
-async function readCsvFile(filePath) {
-  return new Promise((resolve, reject) => {
-    const results = {};
-    fs.createReadStream(filePath)
-      .pipe(csv({ headers: false }))
-      .on('data', (data) => {
-        // Skip the first row (headers)
-        if (!data[0].startsWith('#')) {
-          results[data[0]] = data[1];
-        }
-      })
-      .on('end', () => {
-        resolve(results);
-      })
-      .on('error', (err) => {
-        reject(err);
-      });
-  });
-}
+const { readCsvFile } = require('../../util/readCsvFile');
+const { error } = require('../../log/debuger');
 
 module.exports.loadCsvTranslationFiles =
   async function loadCsvTranslationFiles() {
@@ -36,7 +17,7 @@ module.exports.loadCsvTranslationFiles =
 
       // Check if path exists
       if (!fs.existsSync(folderPath)) {
-        return [];
+        return {};
       }
 
       const results = {};
@@ -49,7 +30,10 @@ module.exports.loadCsvTranslationFiles =
       });
 
       const fileDataList = await Promise.all(filePromises);
+
+      // eslint-disable-next-line no-restricted-syntax
       for (const fileData of fileDataList) {
+        // eslint-disable-next-line no-restricted-syntax
         for (const [key, value] of Object.entries(fileData)) {
           results[key] = value;
         }
@@ -57,6 +41,7 @@ module.exports.loadCsvTranslationFiles =
 
       return results;
     } catch (err) {
-      console.error(err);
+      error(err);
+      return {};
     }
   };

@@ -39,42 +39,6 @@ module.exports = {
       } else {
         return null;
       }
-    },
-    stripeSecretKey: (setting, _, { userTokenPayload }) => {
-      const stripeConfig = getConfig('system.stripe', {});
-      if (stripeConfig.secretKey) {
-        return '*******************************';
-      }
-      if (userTokenPayload && userTokenPayload?.user?.uuid) {
-        const stripeSecretKey = setting.find(
-          (s) => s.name === 'stripeSecretKey'
-        );
-        if (stripeSecretKey) {
-          return stripeSecretKey.value;
-        } else {
-          return null;
-        }
-      } else {
-        return null;
-      }
-    },
-    stripeEndpointSecret: (setting, _, { userTokenPayload }) => {
-      const stripeConfig = getConfig('system.stripe', {});
-      if (stripeConfig.endpointSecret) {
-        return '*******************************';
-      }
-      if (userTokenPayload && userTokenPayload?.user?.uuid) {
-        const stripeEndpointSecret = setting.find(
-          (s) => s.name === 'stripeEndpointSecret'
-        );
-        if (stripeEndpointSecret) {
-          return stripeEndpointSecret.value;
-        } else {
-          return null;
-        }
-      } else {
-        return null;
-      }
     }
   }
 };

@@ -2,7 +2,6 @@ const { select } = require('@evershop/postgres-query-builder');
 const { DateTime } = require('luxon');
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
 const { getCartTotalBeforeDiscount } = require('./getCartTotalBeforeDiscount');
-const { getSetting } = require('../../setting/services/setting');
 
 exports.Validator = class Validator {
   static validateFunctions = {};
@@ -90,8 +89,8 @@ exports.Validator = class Validator {
     });
 
     this.constructor.addValidator('customerGroup', (coupon, cart) => {
-      const conditions = JSON.parse(coupon.condition);
-      const userConditions = JSON.parse(coupon.user_condition);
+      const conditions = coupon.condition;
+      const userConditions = coupon.user_condition;
       if (userConditions.group && !userConditions.customer_group.includes(0)) {
         const customerGroupId = cart.getData('customer_group_id');
         if (!conditions.customer_group.includes(customerGroupId)) {
@@ -102,7 +101,7 @@ exports.Validator = class Validator {
     });
 
     this.constructor.addValidator('subTotal', (coupon, cart) => {
-      const conditions = JSON.parse(coupon.condition);
+      const conditions = coupon.condition;
       const minimumSubTotal = !Number.isNaN(parseFloat(conditions.order_total))
         ? parseFloat(conditions.order_total)
         : null;
@@ -116,7 +115,7 @@ exports.Validator = class Validator {
     });
 
     this.constructor.addValidator('minimumQty', (coupon, cart) => {
-      const conditions = JSON.parse(coupon.condition);
+      const conditions = coupon.condition;
       const minimumQty = !Number.isNaN(parseInt(conditions.order_qty, 10))
         ? parseInt(conditions.order_qty, 10)
         : null;
@@ -131,48 +130,108 @@ exports.Validator = class Validator {
       async (coupon, cart) => {
         let flag = true;
         const items = cart.getItems();
-        let conditions;
-        try {
-          conditions = JSON.parse(coupon.condition);
-        } catch (e) {
-          return false;
-        }
+        const conditions = coupon.condition;
         const requiredProducts = conditions.required_products || [];
         if (requiredProducts.length === 0) {
           return true;
         }
-        let categories;
         for (let index = 0; index < requiredProducts.length; index += 1) {
           const condition = requiredProducts[index];
           const { operator } = condition;
-          let { value } = condition;
+          const { value } = condition;
           const minQty = parseInt(condition.qty, 10) || 1;
           let qty = 0;
           // Continue to next item if key is not category
           if (condition.key !== 'category') {
             // eslint-disable-next-line no-continue
             continue;
-          } else if (['IN', 'NOT IN'].includes(operator)) {
+          } else if (
+            ['IN', 'NOT IN'].includes(operator) &&
+            Array.isArray(value)
+          ) {
+            const requiredCategoryIds = value.map((v) =>
+              parseInt(v.trim(), 10)
+            );
+            if (operator === 'IN') {
+              // eslint-disable-next-line no-loop-func
+              items.forEach((item) => {
+                const categoryId = item.getData('category_id');
+                if (requiredCategoryIds.includes(categoryId)) {
+                  qty += item.getData('qty');
+                }
+              });
+            } else {
+              // eslint-disable-next-line no-loop-func
+              items.forEach((item) => {
+                const categoryId = item.getData('category_id');
+                if (!requiredCategoryIds.includes(categoryId)) {
+                  qty += item.getData('qty');
+                }
+              });
+            }
+          } else {
+            // For category based condition, we only support 'IN' and 'NOT IN' operators
+            flag = false;
+            return false;
+          }
+          if (qty < minQty) {
+            flag = false;
+          }
+        }
+        return flag;
+      }
+    );
+
+    this.constructor.addValidator(
+      'requiredProductByCollection',
+      async (coupon, cart) => {
+        let flag = true;
+        const items = cart.getItems();
+        const conditions = coupon.condition;
+        const requiredProducts = conditions.required_products || [];
+        if (requiredProducts.length === 0) {
+          return true;
+        }
+        let collections;
+        for (let index = 0; index < requiredProducts.length; index += 1) {
+          const condition = requiredProducts[index];
+          const { operator } = condition;
+          const { value } = condition;
+
+          const minQty = parseInt(condition.qty, 10) || 1;
+          let qty = 0;
+          // Continue to next item if key is not collection based requirement
+          if (condition.key !== 'collection') {
+            // eslint-disable-next-line no-continue
+            continue;
+          } else if (
+            ['IN', 'NOT IN'].includes(operator) &&
+            Array.isArray(value)
+          ) {
+            const requiredCollectionIDs = value.map((v) =>
+              parseInt(v.trim(), 10)
+            );
             const productIds = items.map((item) => item.getData('product_id'));
-            // Load the categories of all item
-            if (!categories) {
+            // Load the collections of all item
+            if (!collections) {
               // eslint-disable-next-line no-await-in-loop
-              categories = await select()
-                .from('product_category')
+              collections = await select()
+                .from('product_collection')
                 .where('product_id', 'IN', productIds)
                 .execute(pool);
             }
-            value = value.split(',').map((v) => parseInt(v.trim(), 10));
             if (operator === 'IN') {
               // eslint-disable-next-line no-loop-func
               items.forEach((item) => {
                 const productId = item.getData('product_id');
-                const categoryIds = categories.filter(
-                  (category) =>
-                    parseInt(category.product_id, 10) === productId &&
-                    value.includes(parseInt(category.category_id, 10))
+                const collectionIDs = collections.filter(
+                  (collection) =>
+                    parseInt(collection.product_id, 10) === productId &&
+                    requiredCollectionIDs.includes(
+                      parseInt(collection.collection_id, 10)
+                    )
                 );
-                if (categoryIds.length > 0) {
+                if (collectionIDs.length > 0) {
                   qty += item.getData('qty');
                 }
               });
@@ -180,18 +239,20 @@ exports.Validator = class Validator {
               // eslint-disable-next-line no-loop-func
               items.forEach((item) => {
                 const productId = item.getData('product_id');
-                const categoryIds = categories.filter(
-                  (category) =>
-                    parseInt(category.product_id, 10) === productId &&
-                    value.includes(parseInt(category.category_id, 10))
+                const collectionIDs = collections.filter(
+                  (collection) =>
+                    parseInt(collection.product_id, 10) === productId &&
+                    requiredCollectionIDs.includes(
+                      parseInt(collection.collection_id, 10)
+                    )
                 );
-                if (categoryIds.length === 0) {
+                if (collectionIDs.length === 0) {
                   qty += item.getData('qty');
                 }
               });
             }
           } else {
-            // For 'category' type of condition, we only support 'IN' and 'NOT IN' operators
+            // For collection based condition, we only support 'IN' and 'NOT IN' operators
             flag = false;
             return false;
           }
@@ -208,12 +269,8 @@ exports.Validator = class Validator {
       async (coupon, cart) => {
         let flag = true;
         const items = cart.getItems();
-        let conditions;
-        try {
-          conditions = JSON.parse(coupon.condition);
-        } catch (e) {
-          return false;
-        }
+        const conditions = coupon.condition;
+
         const requiredProducts = conditions.required_products || [];
         if (requiredProducts.length === 0) {
           return true;
@@ -228,8 +285,11 @@ exports.Validator = class Validator {
           if (condition.key !== 'attribute_group') {
             // eslint-disable-next-line no-continue
             continue;
-          } else if (['IN', 'NOT IN'].includes(operator)) {
-            value = value.split(',').map((v) => parseInt(v.trim(), 10));
+          } else if (
+            ['IN', 'NOT IN'].includes(operator) &&
+            Array.isArray(value)
+          ) {
+            value = value.map((v) => parseInt(v.trim(), 10));
             if (operator === 'IN') {
               items.forEach((item) => {
                 if (value.includes(item.getData('group_id'))) {
@@ -261,12 +321,7 @@ exports.Validator = class Validator {
       async (coupon, cart) => {
         let flag = true;
         const items = cart.getItems();
-        let conditions;
-        try {
-          conditions = JSON.parse(coupon.condition);
-        } catch (e) {
-          return false;
-        }
+        const conditions = coupon.condition;
         const requiredProducts = conditions.required_products || [];
         if (requiredProducts.length === 0) {
           return true;
@@ -313,12 +368,7 @@ exports.Validator = class Validator {
       async (coupon, cart) => {
         let flag = true;
         const items = cart.getItems();
-        let conditions;
-        try {
-          conditions = JSON.parse(coupon.condition);
-        } catch (e) {
-          return false;
-        }
+        const conditions = coupon.condition;
         const requiredProducts = conditions.required_products || [];
         if (requiredProducts.length === 0) {
           return true;
@@ -333,8 +383,11 @@ exports.Validator = class Validator {
           if (condition.key !== 'sku') {
             // eslint-disable-next-line no-continue
             continue;
-          } else if (['IN', 'NOT IN'].includes(operator)) {
-            value = value.split(',').map((v) => v.trim());
+          } else if (
+            ['IN', 'NOT IN'].includes(operator) &&
+            Array.isArray(value)
+          ) {
+            value = value.map((v) => v.trim());
             if (operator === 'IN') {
               items.forEach((item) => {
                 if (value.includes(item.getData('product_sku'))) {
@@ -363,7 +416,7 @@ exports.Validator = class Validator {
     );
     this.constructor.addValidator('customerGroup', async () => true);
     this.constructor.addValidator('customerEmail', async (coupon, cart) => {
-      const conditions = JSON.parse(coupon.user_condition);
+      const conditions = coupon.user_condition;
       const allowEmails = conditions.emails || [];
 
       // No email means all emails
@@ -385,7 +438,7 @@ exports.Validator = class Validator {
     this.constructor.addValidator(
       'customerPurchasesAmount',
       async (coupon, cart) => {
-        const conditions = JSON.parse(coupon.user_condition);
+        const conditions = coupon.user_condition;
         const purchasedAmount = parseFloat(conditions.purchased.trim()) || null;
 
         // Null means no condition

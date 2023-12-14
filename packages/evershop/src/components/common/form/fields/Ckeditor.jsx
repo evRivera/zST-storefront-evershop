@@ -6,6 +6,7 @@ import React from 'react';
 import Button from '@components/common/form/Button';
 import { Input } from '@components/common/form/fields/Input';
 import './Ckeditor.scss';
+import Spinner from '@components/common/Spinner';
 
 function File({ file, select }) {
   const className = file.isSelected === true ? 'selected' : '';
@@ -120,7 +121,9 @@ function FileBrowser({
       .then((res) => res.json())
       .then((response) => {
         if (!response.error) {
-          setFolders(folders.concat(response.data.name));
+          // Get the first level folder, incase of recursive folder creation
+          const recursiveFolders = folder.split('/');
+          setFolders([...new Set(folders.concat(recursiveFolders[0]))]);
         } else {
           setError(response.error.message);
         }
@@ -166,7 +169,7 @@ function FileBrowser({
 
     if (file === null) setError('No file selected');
     else {
-      //editor.insertHtml(`<img src='${file.url}'/>`);
+      // editor.insertHtml(`<img src='${file.url}'/>`);
       editor.execute('insertImage', { source: file.url });
       editor.fire('change');
       setFileBrowser(false);
@@ -223,13 +226,8 @@ function FileBrowser({
   return (
     <div className="file-browser">
       {loading === true && (
-        <div className="loading">
-          <div className="lds-ring">
-            <div />
-            <div />
-            <div />
-            <div />
-          </div>
+        <div className="fixed top-0 left-0 bottom-0 right-0 flex justify-center">
+          <Spinner width={30} height={30} className="absolute-center" />
         </div>
       )}
       <div className="content">
@@ -456,7 +454,7 @@ export default function CkeditorField({
           </svg>
         </a>
       </div>
-      <input type={'hidden'} name={name} value={editorData} />
+      <input type="hidden" name={name} value={editorData} />
       {editorLoaded && (
         <CKEditor
           config={{

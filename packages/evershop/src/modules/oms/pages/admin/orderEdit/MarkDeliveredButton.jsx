@@ -53,7 +53,8 @@ MarkDeliveredButton.propTypes = {
     shipment: PropTypes.shape({
       shipmentId: PropTypes.number
     }).isRequired
-  }).isRequired
+  }).isRequired,
+  markDeliveredApi: PropTypes.string.isRequired
 };
 
 export const layout = {
@@ -63,7 +64,7 @@ export const layout = {
 
 export const query = `
   query Query {
-    order(id: getContextValue("orderId")) {
+    order(uuid: getContextValue("orderId")) {
       orderId
       shipmentStatus {
         code

@@ -1,53 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const { select } = require('@evershop/postgres-query-builder');
-const uniqid = require('uniqid');
-const { CONSTANTS } = require('@evershop/evershop/src/lib/helpers');
-const { getConfig } = require('@evershop/evershop/src/lib/util/getConfig');
-
-function getUrls(image) {
-  const thumbVersion = image.replace(/.([^.]*)$/, '-thumb.$1');
-  const singleVersion = image.replace(/.([^.]*)$/, '-single.$1');
-  const listingVersion = image.replace(/.([^.]*)$/, '-list.$1');
-  const thumb = fs.existsSync(path.join(CONSTANTS.MEDIAPATH, thumbVersion))
-    ? `/assets${thumbVersion}`
-    : `/assets/theme/frontStore${getConfig(
-        'catalog.product.image.placeHolder'
-      )}`;
-  const single = fs.existsSync(path.join(CONSTANTS.MEDIAPATH, singleVersion))
-    ? `/assets${singleVersion}`
-    : `/assets/theme/frontStore${getConfig(
-        'catalog.product.image.placeHolder'
-      )}`;
-  const listing = fs.existsSync(path.join(CONSTANTS.MEDIAPATH, listingVersion))
-    ? `/assets${listingVersion}`
-    : `/assets/theme/frontStore${getConfig(
-        'catalog.product.image.placeHolder'
-      )}`;
-  const origin = fs.existsSync(path.join(CONSTANTS.MEDIAPATH, image))
-    ? `/assets${image}`
-    : `/assets/theme/frontStore${getConfig(
-        'catalog.product.image.placeHolder'
-      )}`;
-  return {
-    thumb,
-    single,
-    listing,
-    origin
-  };
-}
 
 module.exports = {
   Product: {
     image: async (product) => {
-      const mainImage = product.image || '';
-      const urls = getUrls(mainImage);
+      const mainImage = product.originImage;
       return mainImage
         ? {
-            ...urls,
+            thumb: product.thumbImage || null,
+            single: product.singleImage || null,
+            listing: product.listingImage || null,
             alt: product.name,
-            path: mainImage,
-            uniqueId: uniqid()
+            url: mainImage,
+            uuid: uuidv4(),
+            origin: mainImage
           }
         : null;
     },
@@ -55,17 +21,18 @@ module.exports = {
       const gallery = await select()
         .from('product_image')
         .where('product_image_product_id', '=', product.productId)
+        .and('is_main', '=', false)
         .execute(pool);
-      return gallery.map((image) => {
-        const urls = getUrls(image.image || '');
-        return {
-          id: image.product_image_id,
-          ...urls,
-          alt: product.name,
-          path: image.image,
-          uniqueId: uniqid()
-        };
-      });
+      return gallery.map((image) => ({
+        id: image.product_image_id,
+        alt: product.name,
+        url: image.origin_image,
+        uuid: uuidv4(),
+        origin: image.origin_image,
+        thumb: image.thumb_image,
+        single: image.single_image,
+        listing: image.listing_image
+      }));
     }
   }
 };

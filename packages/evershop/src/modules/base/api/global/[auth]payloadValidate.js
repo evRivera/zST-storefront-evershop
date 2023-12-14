@@ -1,26 +1,17 @@
-const Ajv = require('ajv');
-const addFormats = require('ajv-formats');
 const {
   INVALID_PAYLOAD
 } = require('@evershop/evershop/src/lib/util/httpStatus');
+const { getAjv } = require('../../services/getAjv');
 const markSkipEscape = require('../../services/markSkipEscape');
 
 // Initialize the ajv instance
-const ajv = new Ajv({
-  strict: false,
-  useDefaults: 'empty'
-});
-
-// Add the formats
-addFormats(ajv);
-ajv.addFormat('digits', /^[0-9]*$/);
-
-// Define a custom keyword
+const ajv = getAjv();
+// Define a custom keyword for html escape
 ajv.addKeyword({
   keyword: 'skipEscape',
   modifying: true,
-  compile: function (sch, parentSchema) {
-    return function (data, t) {
+  compile(sch, parentSchema) {
+    return (data, t) => {
       if (parentSchema.type === 'string' && sch === true) {
         // Mark the data as skip escape
         markSkipEscape(t.rootData, t.instancePath);
@@ -31,7 +22,6 @@ ajv.addKeyword({
     };
   }
 });
-
 module.exports = (request, response, delegate, next) => {
   // Get the current route
   const { currentRoute } = request;
@@ -49,11 +39,7 @@ module.exports = (request, response, delegate, next) => {
       response.json({
         error: {
           status: INVALID_PAYLOAD,
-          message: `${
-            validate.errors[0].instancePath === ''
-              ? 'Request data'
-              : validate.errors[0].instancePath
-          } ${validate.errors[0].message}`
+          message: validate.errors[0].message
         }
       });
     }

@@ -1,11 +1,18 @@
 const { execute } = require('graphql');
 const { parse } = require('graphql');
 const { validate } = require('graphql/validation');
-let schema = require('../../services/buildSchema');
+const { debug } = require('@evershop/evershop/src/lib/log/debuger');
+const adminSchema = require('../../services/buildSchema');
+const storeFrontSchema = require('../../services/buildStoreFrontSchema');
 const { getContext } = require('../../services/contextHelper');
-const isDevelopmentMode = require('@evershop/evershop/src/lib/util/isDevelopmentMode');
+const {
+  graphqlErrorMessageFormat
+} = require('../../services/graphqlErrorMessageFormat');
 
 module.exports = async function graphql(request, response, delegate, next) {
+  const {currentRoute} = request;
+  const schema =
+    currentRoute && currentRoute.isAdmin ? adminSchema : storeFrontSchema;
   // TODO: Should we wait for previous async middlewares?
   try {
     const { body } = request;
@@ -21,17 +28,28 @@ module.exports = async function graphql(request, response, delegate, next) {
       } else {
         const document = parse(graphqlQuery);
         // Validate the query
+
         const validationErrors = validate(schema, document);
         if (validationErrors.length > 0) {
+          const formatedErrorMessage = graphqlErrorMessageFormat(
+            graphqlQuery,
+            validationErrors[0].locations[0].line,
+            validationErrors[0].locations[0].column
+          );
+          debug(
+            'critical',
+            `GraphQL validation error: ${formatedErrorMessage}`
+          );
           next(validationErrors[0]);
         } else {
-          if (isDevelopmentMode()) {
-            // eslint-disable-next-line global-require
-            schema = require('../../services/buildSchema');
-          }
+          const context = getContext(request);
+          // Add current user to context
+          context.user = request.locals.user;
+          // Add current customer to context
+          context.customer = request.locals.customer;
           const data = await execute({
             schema,
-            contextValue: getContext(request),
+            contextValue: context,
             document,
             variableValues: graphqlVariables
           });

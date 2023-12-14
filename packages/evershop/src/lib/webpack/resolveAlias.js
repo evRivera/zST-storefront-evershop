@@ -12,6 +12,7 @@ function getAllFilesInFolder(folderPath) {
   const contents = fs.readdirSync(folderPath);
 
   // Loop through each item in the folder
+  // eslint-disable-next-line no-restricted-syntax
   for (const item of contents) {
     const itemPath = path.join(folderPath, item);
 
@@ -24,7 +25,7 @@ function getAllFilesInFolder(folderPath) {
       // Add the file path to the results array if it is a Component or SCSS file
       if (
         (/.js$/.test(item) && /^[A-Z]/.test(item[0])) ||
-        /.scss$/.test(item)
+        /\.(css|scss)$/i.test(item)
       ) {
         const pathParts = itemPath.split(path.sep);
 
@@ -35,7 +36,8 @@ function getAllFilesInFolder(folderPath) {
         const alias = path
           .join('@components', ...pathParts.slice(componentsIndex + 1))
           .replace('.js', '')
-          .replace('.scss', '');
+          .replace('.scss', '')
+          .replace('.css', '');
         results[alias] = itemPath;
       }
     }

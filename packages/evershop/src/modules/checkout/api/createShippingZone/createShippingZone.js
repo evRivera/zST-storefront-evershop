@@ -17,7 +17,7 @@ const {
 module.exports = async (request, response, deledate, next) => {
   const connection = await getConnection();
   await startTransaction(connection);
-  const { name, country, provinces } = request.body;
+  const { name, country, provinces = [] } = request.body;
   try {
     const zone = await insert('shipping_zone')
       .given({
@@ -27,16 +27,14 @@ module.exports = async (request, response, deledate, next) => {
       .execute(connection);
 
     const zoneId = zone.insertId;
-    const provincePromises = provinces.map((province) => {
-      if (province) {
-        return insert('shipping_zone_province')
+    const provincePromises = provinces
+      .filter((p) => !!p)
+      .map((province) => insert('shipping_zone_province')
           .given({
             zone_id: zoneId,
             province
           })
-          .execute(connection);
-      }
-    });
+          .execute(connection));
     await Promise.all(provincePromises);
     await commit(connection);
 

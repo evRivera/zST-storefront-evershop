@@ -2,9 +2,9 @@ const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
 const { getConfig } = require('@evershop/evershop/src/lib/util/getConfig');
 const sgMail = require('@sendgrid/mail');
 const { select } = require('@evershop/postgres-query-builder');
-const { createValue } = require('@evershop/evershop/src/lib/util/factory');
 const { contries } = require('@evershop/evershop/src/lib/locale/countries');
 const { provinces } = require('@evershop/evershop/src/lib/locale/provinces');
+const { error } = require('@evershop/evershop/src/lib/log/debuger');
 
 module.exports = async function sendOrderConfirmationEmail(data) {
   try {
@@ -74,17 +74,14 @@ module.exports = async function sendOrderConfirmationEmail(data) {
     // Send the email
     const msg = {
       to: order.customer_email,
-      subject: await createValue(
-        'sendGridOrderConfirmationEmailSubject',
-        'Order Confirmation'
-      ),
-      from: from,
+      subject: orderPlaced.subject || 'Order Confirmation',
+      from,
       templateId: orderPlaced.templateId,
-      dynamicTemplateData: await createValue('sendGridOrderData', emailData)
+      dynamicTemplateData: emailData
     };
 
     await sgMail.send(msg);
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
+    error(e);
   }
 };

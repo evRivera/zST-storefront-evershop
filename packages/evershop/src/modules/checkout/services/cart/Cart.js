@@ -3,18 +3,19 @@ const isEqualWith = require('lodash/isEqualWith');
 const { select, del } = require('@evershop/postgres-query-builder');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('@evershop/evershop/src/lib/postgres/connection');
+const normalizePort = require('@evershop/evershop/bin/lib/normalizePort');
+const { default: axios } = require('axios');
+const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
+const { getConfig } = require('@evershop/evershop/src/lib/util/getConfig');
 const { DataObject } = require('./DataObject');
 const { Item } = require('./Item');
 const { toPrice } = require('../toPrice');
 const { getSetting } = require('../../../setting/services/setting');
-const { default: axios } = require('axios');
-const { buildUrl } = require('@evershop/evershop/src/lib/router/buildUrl');
 const { getTaxPercent } = require('../../../tax/services/getTaxPercent');
 const { getTaxRates } = require('../../../tax/services/getTaxRates');
 const {
   calculateTaxAmount
 } = require('../../../tax/services/calculateTaxAmount');
-const { getConfig } = require('@evershop/evershop/src/lib/util/getConfig');
 // eslint-disable-next-line no-multi-assign
 module.exports = exports = {};
 
@@ -144,6 +145,17 @@ exports.Cart = class Cart extends DataObject {
         }
       ],
       dependencies: ['items']
+    },
+    {
+      key: 'sub_total_incl_tax',
+      resolvers: [
+        async function resolver() {
+          return toPrice(
+            this.getData('sub_total') + this.getData('tax_amount')
+          );
+        }
+      ],
+      dependencies: ['sub_total', 'tax_amount']
     },
     {
       key: 'grand_total',
@@ -376,34 +388,33 @@ exports.Cart = class Cart extends DataObject {
             // Check if the method is flat rate
             if (shippingMethod.cost !== null) {
               return toPrice(shippingMethod.cost);
-            } else {
-              if (shippingMethod.calculate_api) {
-                // Call the API of the shipping method to calculate the shipping fee. This is an internal API
-                // use axios to call the API
-                // Ignore http status error
-                let api = 'http://localhost:3000';
-                try {
-                  api += buildUrl(shippingMethod.calculate_api, {
-                    cart_id: this.getData('uuid'),
-                    method_id: shippingMethod.uuid
-                  });
-                } catch (e) {
-                  throw new Error(
-                    `Your shipping calculate API ${shippingMethod.calculate_api} is invalid`
-                  );
-                }
-                const response = await axios.get(api);
-                if (response.status < 400) {
-                  return toPrice(response.data.data.cost);
-                } else {
-                  this.errors.shipping_fee_excl_tax = 'response.data.message';
-                  return 0;
-                }
+            } else if (shippingMethod.calculate_api) {
+              // Call the API of the shipping method to calculate the shipping fee. This is an internal API
+              // use axios to call the API
+              // Ignore http status error
+              const port = normalizePort();
+              let api = `http://localhost:${port}`;
+              try {
+                api += buildUrl(shippingMethod.calculate_api, {
+                  cart_id: this.getData('uuid'),
+                  method_id: shippingMethod.uuid
+                });
+              } catch (e) {
+                throw new Error(
+                  `Your shipping calculate API ${shippingMethod.calculate_api} is invalid`
+                );
+              }
+              const response = await axios.get(api);
+              if (response.status < 400) {
+                return toPrice(response.data.data.cost);
               } else {
-                this.errors.shipping_fee_excl_tax =
-                  'Could not calculate shipping fee';
+                this.errors.shipping_fee_excl_tax = 'response.data.message';
                 return 0;
               }
+            } else {
+              this.errors.shipping_fee_excl_tax =
+                'Could not calculate shipping fee';
+              return 0;
             }
           }
         }
@@ -441,9 +452,9 @@ exports.Cart = class Cart extends DataObject {
                 const percentage = getTaxPercent(
                   await getTaxRates(
                     shippingTaxClass,
-                    shippingAddress['country'],
-                    shippingAddress['province'],
-                    shippingAddress['postcode']
+                    shippingAddress.country,
+                    shippingAddress.province,
+                    shippingAddress.postcode
                   )
                 );
 
