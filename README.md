@@ -13,32 +13,24 @@ The sample e-commerce application is based on the open source [EverShop Storefro
 
 ## Prerequisites
 - Must have [AI on IBM Z Sample Fraud Detection Dashboard](https://github.ibm.com/AIonZ/zST-model-analysis) deployed for inferencing and analysis
-- Must have [system requirements](https://evershop.io/docs/development/getting-started/system-requirements) that are provided in EverShop documentation
+- Must have docker installed
 
 ## Step 1 - Install & Deploy Sample E-Commerce Application
-1. Open terminal
-2. Pull sample EverShop application code from GitHub
-    ```
-    git clone git@github.com:evRivera/zST-storefront-evershop.git
-    ```
-3. Navigate to home directory of GitHub repository in terminal
-    ```
-    cd zST-storefront-evershop/
-    ```
-4. Install and deploy sample application
+1. Change **app_url_w_port** in [CheckoutForm.jsx](https://github.com/evRivera/zST-storefront-evershop/blob/main/packages/evershop/src/components/frontStore/stripe/checkout/CheckoutForm.jsx) to your server IP and port (ip:port)
+2. Run command in terminal:
     ```
     docker-compose up
     ```
 
-Note: You can reference the official [EverShop installation guide](https://evershop.io/docs/development/getting-started/installation-guide) for more details.
-
 ## Step 2 - Configure Sample E-Commerce Application
 ### Access admin panel from web  browser
-1. Enter URL in web browser
+1. Enter URL in web browser using app url (e.g. localhost)
     ```
     http://localhost:3000/admin
     ```
-2. Login with admin username/password from database setup
+2. Login with default admin credentials
+    - email: admin@test.com
+    - password: admin
 
 ### Add products
 1. Create categories
@@ -91,7 +83,7 @@ Note: You can reference the official [EverShop installation guide](https://evers
     # ![alt text](./imgs/payment_method.png)
 
 ## Step 3 - Access Sampe E-Commerce Application
-1. Enter URL in web browser
+1. Enter URL in web browser using app url (e.g. localhost)
     ```
     http://localhost:3000
     ```

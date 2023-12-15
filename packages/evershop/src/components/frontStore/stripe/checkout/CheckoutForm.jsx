@@ -135,7 +135,6 @@ export default function CheckoutForm() {
       //   setError(`Payment failed ${payload.error.message}`);
       // } else {
 
-
       var transaction_data = "";
       if (showTestCard == 'success'){
         transaction_data = '{"User": "0", "Month": "9", "Amount": "134.09", "Day": "1", "Merchant Name": "3527213246127876953", "Year": "2002", "Zip": "91750.0", "Card": "0", "Use Chip": "Swipe Transaction", "Time": 621}';
@@ -144,7 +143,7 @@ export default function CheckoutForm() {
         transaction_data = '{"User": "1997", "Month": "9", "Amount": "188.26", "Day": "4", "Merchant Name": "3189517333335617109", "Year": "2016", "Zip": "0", "Card": "2", "Use Chip": "Online Transaction", "Time": 1355}';
       }
 
-      const fraud_check = await fetch('http://localhost:5000/fraud_detector', {
+      const fraud_check = await fetch('http://app_url_w_port/fraud_detector', {
           method: 'POST',
           headers: {
               'Accept': 'application/json',

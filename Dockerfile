@@ -18,5 +18,5 @@ RUN npm install
 RUN npm run build
 
 EXPOSE 80
-EXPOSE 5432
-CMD ["npm", "run", "start"]
+
+CMD ["sh", "startup.sh"]
