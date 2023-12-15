@@ -71,6 +71,7 @@ const cardStyle = {
 // **Remove for fraud demo**
 // export default function CheckoutForm({ stripePublishableKey }) {
 export default function CheckoutForm() {
+  const app_url_w_port = ''
   const [, setSucceeded] = useState(false);
   const [cardComleted, setCardCompleted] = useState(false);
   const [error, setError] = useState(null);
@@ -143,7 +144,7 @@ export default function CheckoutForm() {
         transaction_data = '{"User": "1997", "Month": "9", "Amount": "188.26", "Day": "4", "Merchant Name": "3189517333335617109", "Year": "2016", "Zip": "0", "Card": "2", "Use Chip": "Online Transaction", "Time": 1355}';
       }
 
-      const fraud_check = await fetch('http://app_url_w_port/fraud_detector', {
+      const fraud_check = await fetch('http://' + app_url_w_port + '/fraud_detector', {
           method: 'POST',
           headers: {
               'Accept': 'application/json',

@@ -16,7 +16,7 @@ The sample e-commerce application is based on the open source [EverShop Storefro
 - Must have docker installed
 
 ## Step 1 - Install & Deploy Sample E-Commerce Application
-1. Change **app_url_w_port** in [CheckoutForm.jsx](https://github.com/evRivera/zST-storefront-evershop/blob/main/packages/evershop/src/components/frontStore/stripe/checkout/CheckoutForm.jsx) to your server IP and port (ip:port)
+1. Set **app_url_w_port** variable in [CheckoutForm.jsx](https://github.com/evRivera/zST-storefront-evershop/blob/main/packages/evershop/src/components/frontStore/stripe/checkout/CheckoutForm.jsx) to your server IP and port (ip:port)
 2. Run command in terminal:
     ```
     docker-compose up
