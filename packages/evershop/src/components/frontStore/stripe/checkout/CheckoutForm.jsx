@@ -71,7 +71,7 @@ const cardStyle = {
 // **Remove for fraud demo**
 // export default function CheckoutForm({ stripePublishableKey }) {
 export default function CheckoutForm() {
-  const app_url_w_port = ''
+  const app_url_w_port = 'ip:port'
   const [, setSucceeded] = useState(false);
   const [cardComleted, setCardCompleted] = useState(false);
   const [error, setError] = useState(null);
